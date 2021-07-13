@@ -9,43 +9,17 @@ const {
 const BN = require("bn.js");
 
 const IWETH = artifacts.require("IWETH");
-const { WETH, DAI, WETH_WHALE, DAI_WHALE } = require("./token_address");
+const { WETH, DAI } = require("./token_address");
 const IERC20 = artifacts.require("IERC20");
 
 const toWei = (value) => web3.utils.toWei(String(value));
 
-function cast(x) {
-	if (x instanceof BN) {
-		return x;
-	}
-	return new BN(x);
-}
 
-function eq(x, y) {
-	x = cast(x);
-	y = cast(y);
-	return x.eq(y);
-}
-
-function pow(x, y) {
-	x = cast(x);
-	y = cast(y);
-	return x.pow(y);
-}
-
-contract("LP stake", ([user]) => {
-	let uniRouter;
-	let uniFactory;
-	let uniPair;
-	let iweth;
-	let dai;
-	const MaxUint256 = pow(2, 254);
+contract("Mint and Reward Token", ([user]) => {
 
 	before(async function () {
-		uniRouter = await IUniswapV2Router.at('0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D')
-		uniFactory = await IUniswapV2Factory.at('0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f')
 		iweth = await IWETH.at(WETH)
-    	dai = await IERC20.at(DAI)
+    	dai   = await IERC20.at(DAI)
 
 		await iweth.deposit({from: user, value: toWei('2')});
 
