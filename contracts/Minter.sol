@@ -21,6 +21,20 @@ contract Minter is Ownable {
     /// @notice All ERC20 all tokens with what can be used to pay
     mapping(address => bool) public paymentAllowed;
 
+    /// @notice user invest
+    event Freeze(
+        address indexed user,
+        address token,
+        uint256 amount
+    );
+
+    /// @notice User refund invested
+    event Unfreeze(
+        address indexed user,
+        address token,
+        uint256 amount
+    );
+
     /// @notice For method that need that user (msg.sender) have funds
     modifier userWithFunds (address _token) {
         require(investorFunds[msg.sender][_token] > 0,"Minter: User without funds");
@@ -45,14 +59,13 @@ contract Minter is Ownable {
     /// @param _amount of tokens to tranfer
 	function freeze(address _token, uint256 _amount) external {
 		require(paymentAllowed[_token], "Minter: Token not allowed");
-		require(
-            ERC20(_token).transferFrom(msg.sender, address(this), _amount),
-            "Minter: Can not tranfer, permision?"
-        );
+        ERC20(_token).transferFrom(msg.sender, address(this), _amount);
+        emit Freeze(msg.sender, _token, _amount);
         investorFunds[msg.sender][_token] += _amount;
 	}
 
     /// @notice  this method send all the reward tokens to the user
+    /// @param _token address of a ERC20 used to invest
 	function claimReward(address _token) external userWithFunds(_token) {
         /// reward logic for this draft just claim give a static reward
         // emit
@@ -60,8 +73,10 @@ contract Minter is Ownable {
 	}
 
     /// @notice this method let the user withdraw their funds
+    /// @param _token address of the token that will be refund
 	function unfreeze(address _token) external userWithFunds(_token) {
-        ERC20(_token).transferFrom(msg.sender, address(this), investorFunds[msg.sender][_token]);
+        ERC20(_token).transfer( address(this), investorFunds[msg.sender][_token]);
+        emit Unfreeze(msg.sender, _token, investorFunds[msg.sender][_token]);
         investorFunds[msg.sender][_token] = 0;
 	}
 
