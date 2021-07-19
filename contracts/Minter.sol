@@ -1,16 +1,17 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.6;
+pragma solidity 0.6.12;
 
 import "hardhat/console.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Reward } from "./Reward.sol";
+import { ValueTier } from "./interfaces/tv-tier/tier/ValueTier.sol";
 
 /// @title Terra Virtual Rewards Minter
 /// @author nazhG
 /// @notice This constract let user invest and claim the reward token
 /// @dev this contract is a draft
-contract Minter is Ownable {
+contract Minter is Ownable, ValueTier {
 	/// @notice Address of reward token
     address public tokenAddress;
 
@@ -42,7 +43,7 @@ contract Minter is Ownable {
     }
 
 	/// @param _tokenAddress reward token address
-    constructor(address _tokenAddress) {
+    constructor(address _tokenAddress, uint256[8] memory tierValues_) public ValueTier(tierValues_){
 		tokenAddress = _tokenAddress;
     }
 
@@ -67,9 +68,10 @@ contract Minter is Ownable {
     /// @notice  this method send all the reward tokens to the user
     /// @param _token address of a ERC20 used to invest
 	function claimReward(address _token) external userWithFunds(_token) {
-        /// reward logic for this draft just claim give a static reward
-        // emit
-		Reward(tokenAddress).claimReward(5, msg.sender);
+		Reward(tokenAddress).claimReward(
+            5, 
+            msg.sender
+        );
 	}
 
     /// @notice this method let the user withdraw their funds

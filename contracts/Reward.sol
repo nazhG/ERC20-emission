@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.6;
+pragma solidity 0.6.12;
 
 import "hardhat/console.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -13,7 +13,7 @@ contract Reward is ERC20, Ownable {
 	/// @notice Address of the contract with the logic to gives the rewards to the user
     address public minter;
 		
-    constructor() ERC20("TVR", "Terra Virtual Rewards") {}
+    constructor() ERC20("TVR", "Terra Virtual Rewards") public {}
 
 	/// @notice set the contract address that will be authorized to generate rewards
 	/// @param _minter address of minter contract

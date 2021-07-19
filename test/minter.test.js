@@ -39,7 +39,7 @@ contract("Mint and Reward Token", ([manager, user1, user2]) => {
 
 		// Deploy contracts
 		reward = await Reward.new({ from: manager })
-		minter = await Minter.new(reward.address, { from: manager })
+		minter = await Minter.new(reward.address, [10, 20, 40, 80, 160, 320, 640, 1280], { from: manager })
 
 		// Set payment methods in minter contract
 		minter.setPaymentAllowed(DAI , true, { from: manager })
