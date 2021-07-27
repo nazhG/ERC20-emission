@@ -17,7 +17,7 @@ contract Minter is Ownable, ValueTier {
 
     /// @notice There is stored the users balances
     /// user address => token used to invest => user balance of that token
-    mapping(address => mapping(address => uint256)) public investorFunds;
+    mapping(address => uint256) public investorFunds;
 
     /// @notice All ERC20 all tokens with what can be used to pay
     mapping(address => bool) public paymentAllowed;
@@ -37,13 +37,13 @@ contract Minter is Ownable, ValueTier {
     );
 
     /// @notice For method that need that user (msg.sender) have funds
-    modifier userWithFunds (address _token) {
-        require(investorFunds[msg.sender][_token] > 0,"Minter: User without funds");
+    modifier userWithFunds () {
+        require(investorFunds[msg.sender] > 0,"Minter: User without funds");
         _;
     }
 
 	/// @param _tokenAddress reward token address
-    constructor(address _tokenAddress, uint256[8] memory tierValues_) public ValueTier(tierValues_){
+    constructor(address _tokenAddress, uint256[4] memory tierValues_) public ValueTier(tierValues_){
 		tokenAddress = _tokenAddress;
     }
 
@@ -62,12 +62,11 @@ contract Minter is Ownable, ValueTier {
 		require(paymentAllowed[_token], "Minter: Token not allowed");
         ERC20(_token).transferFrom(msg.sender, address(this), _amount);
         emit Freeze(msg.sender, _token, _amount);
-        investorFunds[msg.sender][_token] += _amount;
+        investorFunds[msg.sender] += _amount;
 	}
 
     /// @notice  this method send all the reward tokens to the user
-    /// @param _token address of a ERC20 used to invest
-	function claimReward(address _token) external userWithFunds(_token) {
+	function claimReward() external userWithFunds {
 		Reward(tokenAddress).claimReward(
             5, 
             msg.sender
@@ -76,10 +75,16 @@ contract Minter is Ownable, ValueTier {
 
     /// @notice this method let the user withdraw their funds
     /// @param _token address of the token that will be refund
-	function unfreeze(address _token) external userWithFunds(_token) {
-        ERC20(_token).transfer( address(this), investorFunds[msg.sender][_token]);
-        emit Unfreeze(msg.sender, _token, investorFunds[msg.sender][_token]);
-        investorFunds[msg.sender][_token] = 0;
+	function unfreeze(address _token) external userWithFunds {
+        ERC20(_token).transfer( address(this), investorFunds[msg.sender]);
+        emit Unfreeze(msg.sender, _token, investorFunds[msg.sender]);
+        investorFunds[msg.sender] = 0;
 	}
+
+    /// @notice get the tier number through the user's adress
+    /// @param _user user's adress
+    function getUserTier(address _user) external view returns (uint) {
+        return uint(valueToTier(investorFunds[_user]));
+    }
 
 }

@@ -12,7 +12,7 @@ module.exports = {
     hardhat: {
       forking: {
         url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
-        blockNumber: 12404000
+        blockNumber: 12400000
       }
     },
   },
@@ -23,15 +23,6 @@ module.exports = {
   },
   solidity: {
     compilers: [
-      {
-        version: "0.8.6",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 200,
-          },
-        },
-      },
       {
         version: "0.6.12",
         settings: {

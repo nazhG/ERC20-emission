@@ -13,17 +13,17 @@ import { ITier } from "./ITier.sol";
 /// Note that `ValueTier` does NOT implement `ITier`.
 /// `ValueTier` does include state however, to track the `tierValues` so is not a library.
 contract ValueTier {
-    uint256[8] public tierValues;
+    uint256[4] public tierValues;
 
     /// Set the `tierValues` on construction to be referenced immutably.
-    constructor(uint256[8] memory tierValues_) public {
+    constructor(uint256[4] memory tierValues_) public {
         tierValues = tierValues_;
     }
 
     /// Complements the default solidity accessor for `tierValues`.
     /// Returns all the values in a list rather than requiring an index be specified.
     /// @return The immutable `tierValues`.
-    function getTierValues() external view returns(uint256[8] memory) {
+    function getTierValues() external view returns(uint256[4] memory) {
         return tierValues;
     }
 
