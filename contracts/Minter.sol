@@ -3,8 +3,9 @@ pragma solidity 0.6.12;
 
 import "hardhat/console.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { Reward } from "./Reward.sol";
+import { PrestigePoints } from "./PrestigePoints.sol";
 import { ValueTier } from "./interfaces/tv-tier/tier/ValueTier.sol";
 
 /// @title Terra Virtual Rewards Minter
@@ -12,12 +13,20 @@ import { ValueTier } from "./interfaces/tv-tier/tier/ValueTier.sol";
 /// @notice This constract let user invest and claim the reward token
 /// @dev this contract is a draft
 contract Minter is Ownable, ValueTier {
+    using SafeMath for uint256;
+
 	/// @notice Address of reward token
     address public tokenAddress;
 
+    /// store the funds and when was freezed
+    struct Invest {
+        uint256 timeStart;
+        uint256 funds;
+    }
+
     /// @notice There is stored the users balances
     /// user address => token used to invest => user balance of that token
-    mapping(address => uint256) public investorFunds;
+    mapping(address => Invest) public investorFunds;
 
     /// @notice All ERC20 all tokens with what can be used to pay
     mapping(address => bool) public paymentAllowed;
@@ -38,7 +47,7 @@ contract Minter is Ownable, ValueTier {
 
     /// @notice For method that need that user (msg.sender) have funds
     modifier userWithFunds () {
-        require(investorFunds[msg.sender] > 0,"Minter: User without funds");
+        require(investorFunds[msg.sender].funds > 0,"Minter: User without funds");
         _;
     }
 
@@ -62,13 +71,37 @@ contract Minter is Ownable, ValueTier {
 		require(paymentAllowed[_token], "Minter: Token not allowed");
         ERC20(_token).transferFrom(msg.sender, address(this), _amount);
         emit Freeze(msg.sender, _token, _amount);
-        investorFunds[msg.sender] += _amount;
+        investorFunds[msg.sender]= Invest(block.timestamp, _amount);
 	}
 
     /// @notice  this method send all the reward tokens to the user
 	function claimReward() external userWithFunds {
-		Reward(tokenAddress).claimReward(
-            5, 
+
+        // prestige logic
+
+        uint256 reward = 0;
+
+        // the objective of this is know how much you earn per day
+        // if in a year you earn 10%, 0.1 (10%) div 365 day ~= 0.00028 earn rate per day
+        // 0.00028 = 7 / 25000
+        uint256 rewardPerDay = investorFunds[msg.sender].funds.mul(7).div(25000);
+        console.log("\tDaily earn rate: ", rewardPerDay);
+
+        // this calculates how many days have passed since the investment
+        // 86400 seconds in a day
+        uint256 daysInvested = block.timestamp.sub(investorFunds[msg.sender].timeStart).div(86400);
+        console.log("\tDays that have passed since the investment : ", daysInvested);
+
+        reward = rewardPerDay.mul(daysInvested);
+
+        // we are doubling the reward for the entire month completed
+        if (daysInvested > 30) {
+            console.log("\tNumber of whole months of investment : ", daysInvested.div(30));
+            reward = reward.add(daysInvested.div(30).mul(30).mul(rewardPerDay));
+        }
+
+		PrestigePoints(tokenAddress).claimReward(
+            reward, 
             msg.sender
         );
 	}
@@ -76,15 +109,15 @@ contract Minter is Ownable, ValueTier {
     /// @notice this method let the user withdraw their funds
     /// @param _token address of the token that will be refund
 	function unfreeze(address _token) external userWithFunds {
-        ERC20(_token).transfer( address(this), investorFunds[msg.sender]);
-        emit Unfreeze(msg.sender, _token, investorFunds[msg.sender]);
-        investorFunds[msg.sender] = 0;
+        ERC20(_token).transfer( address(this), investorFunds[msg.sender].funds);
+        emit Unfreeze(msg.sender, _token, investorFunds[msg.sender].funds);
+        investorFunds[msg.sender].funds = 0;
 	}
 
     /// @notice get the tier number through the user's adress
     /// @param _user user's adress
     function getUserTier(address _user) external view returns (uint) {
-        return uint(valueToTier(investorFunds[_user]));
+        return uint(valueToTier(investorFunds[_user].funds));
     }
 
 }

@@ -9,11 +9,11 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 /// @author nazhG
 /// @notice This token is used to redeem NFT in terra virtua
 /// @dev this contract is a draft
-contract Reward is ERC20, Ownable {
+contract PrestigePoints is ERC20, Ownable {
 	/// @notice Address of the contract with the logic to gives the rewards to the user
     address public minter;
 		
-    constructor() ERC20("TVR", "Terra Virtual Rewards") public {}
+    constructor() ERC20("TVP", "Terra Virtual Prestige") public {}
 
 	/// @notice set the contract address that will be authorized to generate rewards
 	/// @param _minter address of minter contract
@@ -26,7 +26,7 @@ contract Reward is ERC20, Ownable {
 	function claimReward(uint256 _rewardAmount, address _usersAdress) external {
 		require(minter == msg.sender, "Reward: only minter");
         _mint(_usersAdress, _rewardAmount); // emit Transfer
-    	console.log("Reward minted: ", _rewardAmount);
+    	console.log("\tReward minted: ", _rewardAmount);
 	}
 
 }

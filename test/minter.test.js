@@ -1,6 +1,6 @@
 const IUniswapV2Router = artifacts.require("IUniswapV2Router")
 const Minter = artifacts.require("Minter")
-const Reward = artifacts.require("Reward")
+const PrestigePoints = artifacts.require("PrestigePoints")
 const {
 	expectEvent,
 	expectRevert,
@@ -16,12 +16,12 @@ const toWei = (value) => web3.utils.toWei(String(value))
 
 /// Test of draft for the ERC20 emissions
 contract("Mint and Reward Token", ([manager, user1, silverUser]) => {
-	let weth, reward, minter 
+	let weth, prestigePoints, minter 
 	const K = 1000,
 	BRONCE = 5*K,
 	SILVER = 10*K,
 	GOLD = 25*K,
-	PLATINUM = 125*K,
+	PLATINUM = 50*K,
 	TIERS_IN_CONTRACT = [BRONCE, SILVER, GOLD, PLATINUM],
 	TIERS = {
 		zero: 0,
@@ -52,14 +52,14 @@ contract("Mint and Reward Token", ([manager, user1, silverUser]) => {
 		)
 
 		// Deploy contracts
-		reward = await Reward.new({ from: manager })
-		minter = await Minter.new(reward.address, TIERS_IN_CONTRACT, { from: manager })
+		prestigePoints = await PrestigePoints.new({ from: manager })
+		minter = await Minter.new(prestigePoints.address, TIERS_IN_CONTRACT, { from: manager })
 
 		// Set payment methods in minter contract
 		minter.setPaymentAllowed(TVK , true, { from: manager })
 
 		// Set address for the contract allowed to mint reward token
-		reward.setMinter(minter.address, { from: manager })
+		prestigePoints.setMinter(minter.address, { from: manager })
 	});
 
 	it("Is all setup", async function () {
@@ -67,18 +67,18 @@ contract("Mint and Reward Token", ([manager, user1, silverUser]) => {
 		assert.ok(await tvk.balanceOf(silverUser), "User balance")
 
 		// Does the reward token have the minter contract address assigned ?
-		assert.equal(await minter.tokenAddress(), reward.address, "Token reward is not set in the minter")
+		assert.equal(await minter.tokenAddress(), prestigePoints.address, "Token reward is not set in the minter")
 
 		// Does the minter have the reward token contract address assigned ?
-		assert.equal(await reward.minter(), minter.address, "Minter is not set in the reward token")
+		assert.equal(await prestigePoints.minter(), minter.address, "Minter is not set in the reward token")
 	});
 
 	it("Should invest in the minter", async function () {
 		await tvk.approve(minter.address, SILVER, { from:silverUser })
 		await minter.freeze(tvk.address, SILVER, { from:silverUser })
 
-		const userFunds = Number(await minter.investorFunds(silverUser))
-
+		const userFunds = Number((await minter.investorFunds(silverUser)).funds)
+		
 		// We check that minter store balances freezed by the silverUser 
 		assert.equal(
 			userFunds,
@@ -94,19 +94,20 @@ contract("Mint and Reward Token", ([manager, user1, silverUser]) => {
 		)
 	});
 
-	// it("Should claim rewards", async function () {
-	// 	// for this draft, just claim give you 5 reward token
-	// 	await minter.claimReward(weth.address, { from:user1 })
+	it("Should claim rewards", async function () {
+		await time.increase(3888000 /** 45 days */);
 
-	// 	const user1Reward = Number(await reward.balanceOf(user1))
+		await minter.claimReward({ from:silverUser })
 
-	// 	// We check that user1 have 5 reward token
-	// 	assert.equal(
-	// 		user1Reward,
-	// 		5,
-	// 		"User can not claim reward"
-	// 	)
-	// });
+		const silverUserReward = Number(await prestigePoints.balanceOf(silverUser))
+
+		// We check that user1 have 5 reward token
+		assert.equal(
+			silverUserReward,
+			150,
+			"User can not claim reward"
+		)
+	});
 
 	// it("Should unfreeze funds", async function () {
 	// 	const user1initialBalance = Number(await weth.balanceOf(user1))

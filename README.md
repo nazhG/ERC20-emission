@@ -4,21 +4,12 @@ This is the draft, it is an initial phase of the contract that allows users to i
 
 [**Planing**](https://docs.google.com/document/d/1u8cs_PrxGBKHLk9jD1hM3G9rWKKh6PRRvu39L9QyFG8/edit?ts=60e5a921#heading=h.s2ybe8291aua)  
 
-### Pre-requisites 📋
+Prestige Tiers
 
-_nodejs_
-
-[See Hardhat setup enviroment tutorial](https://hardhat.org/tutorial/setting-up-the-environment.html)
-
-```
-npm i
-```
-
-## Compiling 🗃️
-
-```
-npm run compile
-```
+ - BRONCE = 5.000 TVK
+ - 	SILVER = 10.000 TVK
+ - 	GOLD = 25.000 TVK
+ - 	PLATINUM = 50.000 TVK
 
 ## Running tests ⚙️ _in progress_
 
