@@ -4,6 +4,11 @@ This is the draft, it is an initial phase of the contract that allows users to i
 
 [**Planing**](https://docs.google.com/document/d/1u8cs_PrxGBKHLk9jD1hM3G9rWKKh6PRRvu39L9QyFG8/edit?ts=60e5a921#heading=h.s2ybe8291aua)  
 
+[**TVK**](https://polygonscan.com/token/0x5667dcc0ab74d1b1355c3b2061893399331b57e2) in polygon
+
+[**ETH to TVK in matic network**](https://wallet.matic.network/)
+
+
 Prestige Tiers
 
  - BRONCE = 5.000 TVK
