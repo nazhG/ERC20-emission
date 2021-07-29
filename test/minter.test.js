@@ -7,6 +7,7 @@ const {
 	time,
   } = require("@openzeppelin/test-helpers")
 const BN = require("bn.js");
+const { assert } = require("hardhat");
 
 const IWETH = artifacts.require("IWETH")
 const { TVK, UNISWAP, WETH } = require("./token_address")
@@ -30,8 +31,6 @@ contract("Mint and Reward Token", ([manager, user1, silverUser]) => {
 		gold: 3,
 		platinum: 4 
 	}
-
-
 
 	before(async function () {
 		// ERC token used to pay in the test

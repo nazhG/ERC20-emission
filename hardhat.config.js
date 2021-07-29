@@ -9,12 +9,29 @@ require("hardhat-gas-reporter");
 
 module.exports = {
   networks: {
+    localhost: {
+      url: "http://127.0.0.1:8545",
+    },
     hardhat: {
       forking: {
-        url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
-        blockNumber: 12400000
+        url: "https://rpc-mumbai.matic.today",
+        chainId: 80001,
+        gasPrice: 20000000000,
+        accounts: { mnemonic: process.env.MNEMONIC },
       }
     },
+    mainnet: {
+      url: "https://rpc-mumbai.matic.network",
+      chainId: 137,
+      gasPrice: 20000000000,
+      accounts: { mnemonic: process.env.MNEMONIC },
+    },
+    testnet: {
+      url: "https://rpc-mumbai.matic.today",
+      chainId: 80001,
+      gasPrice: 20000000000,
+      accounts: { mnemonic: process.env.MNEMONIC },
+    }
   },
   gasReporter: {
     enabled: true,
