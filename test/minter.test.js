@@ -1,4 +1,3 @@
-const IUniswapV2Router = artifacts.require("IUniswapV2Router")
 const Minter = artifacts.require("Minter")
 const PrestigePoints = artifacts.require("PrestigePoints")
 const {
@@ -9,15 +8,14 @@ const {
 const BN = require("bn.js");
 const { assert } = require("hardhat");
 
-const IWETH = artifacts.require("IWETH")
-const { TVK, UNISWAP, WETH } = require("./token_address")
+const { TVK } = require("./token_address")
 const IERC20 = artifacts.require("IERC20")
 
 const toWei = (value) => web3.utils.toWei(String(value))
 
 /// Test of draft for the ERC20 emissions
-contract("Mint and Reward Token", ([manager, user1, silverUser]) => {
-	let weth, prestigePoints, minter 
+contract("Mint and Reward Token", ([manager]) => {
+	let prestigePoints, minter 
 	const K = 1000,
 	BRONCE = 5*K,
 	SILVER = 10*K,
@@ -32,23 +30,17 @@ contract("Mint and Reward Token", ([manager, user1, silverUser]) => {
 		platinum: 4 
 	}
 
+	silverUser = '0x71f1a8f947ba7fe5662fc84fa3979d7d52731ccc' // account TVK in matic network
+
 	before(async function () {
 		// ERC token used to pay in the test
-		weth = await IWETH.at(WETH)
     	tvk   = await IERC20.at(TVK)
-
-		// Geting wther in user address to test
-		await weth.deposit({from: silverUser, value: toWei('2')})
 		
 		// Geting TVK in user address to test
-		const uniRouter = await IUniswapV2Router.at(UNISWAP)
-		await uniRouter.swapExactETHForTokens(
-			1,
-			[WETH, TVK],
-			silverUser,
-			(await time.latest()) + 10,
-			{from: user1, value: toWei('1')}
-		)
+		await hre.network.provider.request({
+			method: "hardhat_impersonateAccount",
+			params: [silverUser],
+		});
 
 		// Deploy contracts
 		prestigePoints = await PrestigePoints.new({ from: manager })
@@ -107,29 +99,5 @@ contract("Mint and Reward Token", ([manager, user1, silverUser]) => {
 			"User can not claim reward"
 		)
 	});
-
-	// it("Should unfreeze funds", async function () {
-	// 	const user1initialBalance = Number(await weth.balanceOf(user1))
-		
-	// 	await minter.unfreeze(weth.address, { from:user1 })
-		
-	// 	const user1finalBalance = Number(await weth.balanceOf(user1))
-
-	// 	// We check that the user has the same balance with which he started
-	// 	assert.equal(
-	// 		user1initialBalance,
-	// 		user1finalBalance - 100,
-	// 		"User can not unfreeze inicial invest"
-	// 	)
-
-	// 	const user1Funds = Number(await minter.investorFunds(user1, weth.address))
-
-	// 	// We check that the contract decreases the stored balance after unfreezing the funds 
-	// 	assert.equal(
-	// 		user1Funds,
-	// 		0,
-	// 		"User can not freeze funds"
-	// 	)
-	// });
 
 });
