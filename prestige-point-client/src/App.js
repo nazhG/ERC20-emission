@@ -1,25 +1,35 @@
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import { Switch, Router, Route, Redirect } from "react-router-dom";
+import history from "./history";
 
-function App() {
+// COMPONENTS
+import Header from "./components/Header";
+import Home from "./components/Home";
+import Dashboard from "./components/Dashboard";
+import Upload from "./components/Upload";
+
+export default function App() {
+  const routes = (
+    <Switch>
+      <Route path="/" exact>
+        <Home />
+      </Route>
+      <Route path="/dashboard" exact>
+        <Dashboard />
+      </Route>
+      <Route path="/upload" exact>
+        <Upload />
+      </Route>
+      <Redirect to="/" />
+    </Switch>
+  );
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      <Router history={history}>
+        <Header />
+        {routes}
+      </Router>
+    </>
   );
 }
-
-export default App;
