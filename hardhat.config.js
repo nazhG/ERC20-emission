@@ -14,14 +14,10 @@ module.exports = {
         url: "https://matic-mainnet.chainstacklabs.com",
       }
     },
-    mainnet: {
-      url: "https://rpc-mumbai.matic.network",
-      chainId: 137,
-      gasPrice: 20000000000,
-    },
     testnet: {
-      url: "https://rpc-mumbai.matic.today",
-      chainId: 80001,
+      url: `https://polygon-mumbai.g.alchemy.com/v2/${ process.env.ALCHEMY_MUMBAI_KEY }`,
+      accounts: [`0x${ process.env.PRIVATE_KEY }`],
+      chainID: 80001,
       gasPrice: 20000000000,
     }
   },

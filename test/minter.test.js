@@ -8,7 +8,7 @@ const {
 const BN = require("bn.js");
 const { assert } = require("hardhat");
 
-const { TVK } = require("./token_address")
+const { TVK, BRONCE, SILVER, GOLD, PLATINUM, } = require("./token_address")
 const IERC20 = artifacts.require("IERC20")
 
 const toWei = (value) => web3.utils.toWei(String(value))
@@ -16,11 +16,7 @@ const toWei = (value) => web3.utils.toWei(String(value))
 /// Test of draft for the ERC20 emissions
 contract("Mint and Reward Token", ([manager]) => {
 	let prestigePoints, minter 
-	const K = 1000,
-	BRONCE = 5*K,
-	SILVER = 10*K,
-	GOLD = 25*K,
-	PLATINUM = 50*K,
+	
 	TIERS_IN_CONTRACT = [BRONCE, SILVER, GOLD, PLATINUM],
 	TIERS = {
 		zero: 0,

@@ -22,6 +22,8 @@ _In order to test using a mainnet fork you must set:_
 
 * [**ALCHEMY_MAIN_API_KEY**](https://dashboard.alchemyapi.io/apps)  
 * [**COINMARKETCAP_API_KEY**](https://pro.coinmarketcap.com/account)
+* **PRIVATE_KEY** get it on metamask
+* [**ALCHEMY_MUMBAI_KEY**](https://dashboard.alchemyapi.io/)
 
 _in your .env file_
 
