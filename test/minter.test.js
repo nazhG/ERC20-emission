@@ -19,11 +19,10 @@ contract("Mint and Reward Token", ([manager]) => {
 	
 	TIERS_IN_CONTRACT = [BRONCE, SILVER, GOLD, PLATINUM],
 	TIERS = {
-		zero: 0,
-		bronce: 1,
-		silver: 2,
-		gold: 3,
-		platinum: 4 
+		bronce: 0,
+		silver: 1,
+		gold: 2,
+		platinum: 3 
 	}
 
 	silverUser = '0x71f1a8f947ba7fe5662fc84fa3979d7d52731ccc' // account TVK in matic network
@@ -62,7 +61,7 @@ contract("Mint and Reward Token", ([manager]) => {
 
 	it("Should invest in the minter", async function () {
 		await tvk.approve(minter.address, SILVER, { from:silverUser })
-		await minter.freeze(tvk.address, SILVER, { from:silverUser })
+		await minter.freeze(tvk.address, TIERS.silver, { from:silverUser })
 
 		const userFunds = Number((await minter.investorFunds(silverUser)).funds)
 		
@@ -82,7 +81,7 @@ contract("Mint and Reward Token", ([manager]) => {
 	});
 
 	it("Should claim rewards", async function () {
-		await time.increase(3888000 /** 45 days */);
+		await time.increase(time.duration.days(45));
 
 		await minter.claimReward({ from:silverUser })
 
@@ -91,7 +90,7 @@ contract("Mint and Reward Token", ([manager]) => {
 		// We check that user1 have 5 reward token
 		assert.equal(
 			silverUserReward,
-			150,
+			Math.floor(SILVER * 0.1 * 45 * ((0.0009 * 45) + 1)), // Decimals TO DO
 			"User can not claim reward"
 		)
 	});

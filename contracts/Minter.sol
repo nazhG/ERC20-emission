@@ -66,25 +66,22 @@ contract Minter is Ownable, ValueTier {
 
     /// @notice let the user freeze a asset, approval is needed to transfer 
     /// @param _token address of a ERC20 used to invest
-    /// @param _amount of tokens to tranfer
-	function freeze(address _token, uint256 _amount) external {
+    /// @param _tier that user want to be
+	function freeze(address _token, uint256 _tier) external {
 		require(paymentAllowed[_token], "Minter: Token not allowed");
-        ERC20(_token).transferFrom(msg.sender, address(this), _amount);
-        emit Freeze(msg.sender, _token, _amount);
-        investorFunds[msg.sender]= Invest(block.timestamp, _amount);
+        ERC20(_token).transferFrom(msg.sender, address(this), ValueTier.tierValues[_tier]);
+        emit Freeze(msg.sender, _token, ValueTier.tierValues[_tier]);
+        investorFunds[msg.sender] = Invest(block.timestamp, ValueTier.tierValues[_tier]);
 	}
 
     /// @notice  this method send all the reward tokens to the user
 	function claimReward() external userWithFunds {
 
         // prestige logic
-
         uint256 reward = 0;
 
-        // the objective of this is know how much you earn per day
-        // if in a year you earn 10%, 0.1 (10%) div 365 day ~= 0.00028 earn rate per day
-        // 0.00028 = 7 / 25000
-        uint256 rewardPerDay = investorFunds[msg.sender].funds.mul(7).div(25000);
+        // earn no bonus rate = 10%
+        uint256 rewardPerDay = investorFunds[msg.sender].funds.div(10);
         console.log("\tDaily earn rate: ", rewardPerDay);
 
         // this calculates how many days have passed since the investment
@@ -94,10 +91,15 @@ contract Minter is Ownable, ValueTier {
 
         reward = rewardPerDay.mul(daysInvested);
 
-        // we are doubling the reward for the entire month completed
-        if (daysInvested > 30) {
-            console.log("\tNumber of whole months of investment : ", daysInvested.div(30));
-            reward = reward.add(daysInvested.div(30).mul(30).mul(rewardPerDay));
+        // have full multipier ?
+        // 1095 = tree years
+        if (daysInvested >= 1095) {
+            reward = reward.mul(2);
+            console.log("\tFull Multipier : ", 2);
+        } else if (daysInvested >= 1) {
+            // Daily the multiplier increases 0.0009 to a maximum of 1 after tree years
+            reward += SafeMath.div(9 * reward * daysInvested, 10000);
+            console.log("\tMultipier : ", SafeMath.mul(9, daysInvested) ,"/10000");
         }
 
 		PrestigePoints(tokenAddress).claimReward(
@@ -116,8 +118,9 @@ contract Minter is Ownable, ValueTier {
 
     /// @notice get the tier number through the user's adress
     /// @param _user user's adress
-    function getUserTier(address _user) external view returns (uint) {
-        return uint(valueToTier(investorFunds[_user].funds));
+    /// @dev return -1 if is not tier
+    function getUserTier(address _user) external view returns (int) {
+        return int(valueToTier(investorFunds[_user].funds)) - 1;
     }
 
 }
