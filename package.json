@@ -12,7 +12,7 @@
     "clean": "hardhat clean"
   },
   "keywords": [],
-  "author": "",
+  "author": "nazhG",
   "license": "ISC",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
