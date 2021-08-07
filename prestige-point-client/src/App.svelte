@@ -1,4 +1,8 @@
 <script>
+	import Notifications from 'svelte-notifications';
+	import Connect_Button from './Connect_Button.svelte';
+	import Modal from 'svelte-simple-modal';
+
 	const BRONCE = 50,
 	SILVER = 100,
 	GOLD = 250,
@@ -8,54 +12,56 @@
 </script>
 
 <main>
-	<div class="head-bar">
-		<img class="logo" src=".\img\terra.png" alt="Terra Logo">
-		<span>Prestige Points</span>
-		<button class="btn-connect">Connect</button>
-	</div>
-	<br>
-	<h1>Join tiers to earn <i>Rewards</i>.</h1>
-	<div class="medals-bar">
-		<div class="bronze-bg">
-			<h2>Bronze</h2>
-			<div class="bronce shine">
-				<img src=".\img\bronce.jpg" alt="bronce">
-				<span></span>
-			</div>
-			<button class="tooltip">
-				{ BRONCE } {TOKEN_SIMBOL}
-				<span class="tooltiptext">
-					Join tier <i>!!</i><br>
-					Min Reward per day { BRONCE * 0.1 } { REWARD_SIMBOL }
-				</span>
-			</button>
+	<Modal>
+	<Notifications>
+		<div class="head-bar">
+			<img class="logo" src=".\img\terra.png" alt="Terra Logo">
+			<span>Prestige Points</span>
+			<Connect_Button />
 		</div>
-		<div class="silver-bg">
-			<h2>Silver</h2>
-			<div class="silver shine">
-				<img src=".\img\silver.jpg" alt="silver">
-				<span></span>
+		<br>
+		<h1>Join tiers to earn <i>Rewards</i>.</h1>
+		<div class="medals-bar">
+			<div class="bronze-bg">
+				<h2>Bronze</h2>
+				<div class="bronce shine">
+					<img src=".\img\bronce.jpg" alt="bronce">
+					<span></span>
+				</div>
+				<button class="btn tooltip">
+					{ BRONCE } {TOKEN_SIMBOL}
+					<span class="tooltiptext">
+						Join tier <i>!!</i><br>
+						Min Reward per day { BRONCE * 0.1 } { REWARD_SIMBOL }
+					</span>
+				</button>
 			</div>
-			<button class="tooltip">
-				{ SILVER } {TOKEN_SIMBOL}
-				<span class="tooltiptext">
-					Join tier <i>!!</i><br>
-					Min Reward per day { SILVER * 0.1 } { REWARD_SIMBOL }
-				</span>
-			</button>
-		</div>
-		<div class="gold-bg">
-			<h2>Gold</h2>
-			<div class="gold shine">
-				<img src=".\img\gold.jpg" alt="gold">
-				<span></span>
+			<div class="silver-bg">
+				<h2>Silver</h2>
+				<div class="silver shine">
+					<img src=".\img\silver.jpg" alt="silver">
+					<span></span>
+				</div>
+				<button class="btn tooltip">
+					{ SILVER } {TOKEN_SIMBOL}
+					<span class="tooltiptext">
+						Join tier <i>!!</i><br>
+						Min Reward per day { SILVER * 0.1 } { REWARD_SIMBOL }
+					</span>
+				</button>
 			</div>
-			<button class="tooltip">
-				{ GOLD } {TOKEN_SIMBOL}
-				<span class="tooltiptext">
-					Join tier <i>!!</i><br>
-					Min Reward per day { GOLD * 0.1 } { REWARD_SIMBOL }
-				</span>
+			<div class="gold-bg">
+				<h2>Gold</h2>
+				<div class="gold shine">
+					<img src=".\img\gold.jpg" alt="gold">
+					<span></span>
+				</div>
+				<button class="btn tooltip">
+					{ GOLD } {TOKEN_SIMBOL}
+					<span class="tooltiptext">
+						Join tier <i>!!</i><br>
+						Min Reward per day { GOLD * 0.1 } { REWARD_SIMBOL }
+					</span>
 			</button>
 		</div>
 		<div class="platinum-bg">
@@ -64,7 +70,7 @@
 				<img src=".\img\platinum.jpg" alt="platinum">
 				<span></span>
 			</div>
-			<button class="tooltip">
+			<button class="btn tooltip">
 				{ PLATINUM } {TOKEN_SIMBOL}
 				<span class="tooltiptext">
 					Join tier <i>!!</i><br>
@@ -80,6 +86,8 @@
 	<footer>
 		<p>&copy; Copyright 2021.</p>
 	</footer>
+	</Notifications>
+	</Modal>
 </main>
 
 <style>
@@ -102,15 +110,6 @@
 	.head-bar span {
 		font-size: 2.5rem;
 		font-weight: bold;
-	}
-
-	button {
-		border-radius: 50px;
-		background-color: white;
-		box-shadow: 2px 2px 15px 2px #ddd;
-		padding: 15px;
-		font-weight: 500;
-		font-size: 0.875rem;
 	}
 
 	.logo {

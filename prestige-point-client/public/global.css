@@ -43,22 +43,31 @@ input:disabled {
 	color: #ccc;
 }
 
-button {
+.btn {
 	color: #333;
 	background-color: #f4f4f4;
 	outline: none;
 }
 
-button:disabled {
+.btn:disabled {
 	color: #999;
 }
 
-button:not(:disabled):active {
+.btn:not(:disabled):active {
 	background-color: #ddd;
 }
 
-button:focus {
+.btn:focus {
 	border-color: #666;
+}
+
+.btn {
+	border-radius: 50px;
+	background-color: white;
+	box-shadow: 2px 2px 15px 2px #ddd;
+	padding: 15px;
+	font-weight: 500;
+	font-size: 0.875rem;
 }
 
 .tooltip {
