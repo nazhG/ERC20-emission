@@ -1,95 +1,102 @@
 <script>
   import { getNotificationsContext } from "svelte-notifications";
   import { onMount } from "svelte";
-
+  import detectEthereumProvider from '@metamask/detect-provider';
+  import { getContext } from 'svelte';
+  import Modal from './Modal.svelte';
+  
+  const { open } = getContext('simple-modal');
   const { addNotification } = getNotificationsContext();
 
   let logged = false,
 	web3,
 	account,
-	chain;
-
-	const ConnectWeb3 = async () => {
-    if (window.ethereum) {
-      web3 = new Web3(window.ethereum);
-      try {
-        // Request account access if needed
-        await window.ethereum.enable();
-				return web3;
-      } catch (error) {
-				throw error;
-      }
-    } else if (window.web3) {
-      window.web3 = new Web3(web3.currentProvider);
-    } else {
-      console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
-    }
-  }
-
-	const getAccounts = function(callback) {
-		if (account && logged) {
-			logged = false;
-		}
-		web3.eth.getAccounts((error,result) => {
-				if (error) {
-					addNotification({
-						text: "Can't get Metamask Account",
-						position: "top-right",
-						type: "danger",
-						removeAfter: 3000,
-					});
-				} else {
-					console.log('Account: ',result);
-					callback(result);
-				}
-		});
-	}
-
-	const accountFilter = function(account) {
-		let ac = String(account);
-		return `${ac.substr(0, 6)}...${ac.substr(ac.length - 4, 4)}`;
-	}
+	chainId;
 
   onMount(async () => {
-    if (ethereum) {
-      ethereum.on("accountsChanged", (accounts) => {
-        console.log("accounts: ", accounts);
-        // Handle the new accounts, or lack thereof.
-        // "accounts" will always be an array, but it can be empty.
-      });
+    const provider = await detectEthereumProvider();
 
-      ethereum.on("chainChanged", (chainId) => {
-        console.log("Chain ID: ", chainId);
-        window.location.reload();
-      });
-
-      ethereum.on("connect", (connectInfo) => {
-        logged = true;
-        console.log("connect: ", connectInfo);
-      });
-
-      ethereum.on("disconnect", (error) => {
-        logged = false;
-        console.log("disconnect: ", error);
-      });
+    if (provider) {
+      console.log('Provider: ', provider); // Initialize your app
+    } else {
+      open(Modal, { message: 'Please, install MetaMask!' });
+      console.log('No provider found');
     }
+
+    // if (provider !== window.ethereum) {
+    //   console.error('Do you have multiple wallets installed?');
+    // }
+
+    const chainId = await ethereum.request({ method: 'eth_chainId' });
+    handleChainChanged(chainId);
+
+    ethereum
+      .request({ method: 'eth_accounts' })
+      .then(handleAccountsChanged)
+      .catch((err) => {
+        console.error(err);
+      });
   });
 
-  function handleConnect() {
-		ConnectWeb3().then((result) => {
-			console.log('conected: ', result);
-			logged = true;
-			web3 = result;
-			getAccounts((result) => account = result);
-		}).catch( (error) => {
-			addNotification({
-				text: error.message,
-				position: "top-right",
-				type: "danger",
-				removeAfter: 5000,
-			})
-		});
+ethereum.on('chainChanged', handleChainChanged);
+
+function handleChainChanged(_chainId) {
+  chainId = _chainId
+  console.log('chain Id: ', parseInt(_chainId));
+  if (chainId && parseInt(chainId) != 80001) {
+    open(Modal, { message: 'Please, change the chain to mumbai',
+      linkRef: 'https://docs.matic.network/docs/develop/metamask/testnet/',
+      linkText: 'How add the chain to MetaMask?',
+    });
   }
+  // window.location.reload();
+}
+
+ethereum.on('accountsChanged', handleAccountsChanged);
+
+async function handleAccountsChanged(accounts) {
+  if (accounts.length === 0) {
+    addNotification({
+      text: 'Please connect to MetaMask.',
+      position: "top-right",
+      type: "danger",
+      removeAfter: 5000,
+    })
+    logged = false;
+    account = null;
+  } else if (accounts[0] !== account) {
+    logged = true;
+    account = accounts[0];
+    addNotification({
+        text: 'Connected to ' + accountFilter(account),
+        position: "top-right",
+        type: "success",
+        removeAfter: 3000,
+      })
+    const chainId = await ethereum.request({ method: 'eth_chainId' });
+    handleChainChanged(chainId);
+  }
+}
+
+function handleConnect() {
+  ethereum
+    .request({ method: 'eth_requestAccounts' })
+    .then(handleAccountsChanged)
+    .catch((err) => {
+      addNotification({
+        text: 'Connection error: ' + err.message,
+        position: "top-right",
+        type: "danger",
+        removeAfter: 5000,
+      })
+    });
+}
+
+const accountFilter = function(account) {
+  let ac = String(account);
+  return `${ac.substr(0, 6)}...${ac.substr(ac.length - 4, 4)}`;
+}
+
 </script>
 
 <button
@@ -102,5 +109,4 @@
     Connect MetaMask
   {/if}
 </button>
-
 <style></style>
