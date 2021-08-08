@@ -4,14 +4,10 @@
   import detectEthereumProvider from '@metamask/detect-provider';
   import { getContext } from 'svelte';
   import Modal from './Modal.svelte';
+	import { Logged, Account, ChainId } from './stores.js';
   
   const { open } = getContext('simple-modal');
   const { addNotification } = getNotificationsContext();
-
-  let logged = false,
-	web3,
-	account,
-	chainId;
 
   onMount(async () => {
     const provider = await detectEthereumProvider();
@@ -27,8 +23,7 @@
     //   console.error('Do you have multiple wallets installed?');
     // }
 
-    const chainId = await ethereum.request({ method: 'eth_chainId' });
-    handleChainChanged(chainId);
+    handleChainChanged(await ethereum.request({ method: 'eth_chainId' }));
 
     ethereum
       .request({ method: 'eth_accounts' })
@@ -41,9 +36,9 @@
 ethereum.on('chainChanged', handleChainChanged);
 
 function handleChainChanged(_chainId) {
-  chainId = _chainId
+  ChainId.set(_chainId);
   console.log('chain Id: ', parseInt(_chainId));
-  if (chainId && parseInt(chainId) != 80001) {
+  if ($ChainId && parseInt($ChainId) != 80001) {
     open(Modal, { message: 'Please, change the chain to mumbai',
       linkRef: 'https://docs.matic.network/docs/develop/metamask/testnet/',
       linkText: 'How add the chain to MetaMask?',
@@ -54,27 +49,26 @@ function handleChainChanged(_chainId) {
 
 ethereum.on('accountsChanged', handleAccountsChanged);
 
-async function handleAccountsChanged(accounts) {
-  if (accounts.length === 0) {
+async function handleAccountsChanged(_accounts) {
+  if (_accounts.length === 0) {
     addNotification({
       text: 'Please connect to MetaMask.',
       position: "top-right",
       type: "danger",
       removeAfter: 5000,
     })
-    logged = false;
-    account = null;
-  } else if (accounts[0] !== account) {
-    logged = true;
-    account = accounts[0];
+    Logged.set(false);
+    Account.set(null);
+  } else if (_accounts[0] !== $Account) {
+    Logged.set(true);
+    Account.set(_accounts[0]);
     addNotification({
-        text: 'Connected to ' + accountFilter(account),
+        text: 'Connected to ' + accountFilter($Account),
         position: "top-right",
         type: "success",
         removeAfter: 3000,
       })
-    const chainId = await ethereum.request({ method: 'eth_chainId' });
-    handleChainChanged(chainId);
+    handleChainChanged(await ethereum.request({ method: 'eth_chainId' }));
   }
 }
 
@@ -92,8 +86,8 @@ function handleConnect() {
     });
 }
 
-const accountFilter = function(account) {
-  let ac = String(account);
+const accountFilter = function(_account) {
+  let ac = String(_account);
   return `${ac.substr(0, 6)}...${ac.substr(ac.length - 4, 4)}`;
 }
 
@@ -102,9 +96,9 @@ const accountFilter = function(account) {
 <button
 	class="btn btn-connect"
 	on:click={handleConnect}
-	disabled={logged}>
-  {#if logged}
-    { accountFilter(account) }
+	disabled={$Logged}>
+  {#if $Logged}
+    { accountFilter($Account) }
   {:else}
     Connect MetaMask
   {/if}
