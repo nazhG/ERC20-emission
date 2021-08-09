@@ -14,7 +14,7 @@ const IERC20 = artifacts.require("IERC20")
 const toWei = (value) => web3.utils.toWei(String(value))
 
 /// Test of draft for the ERC20 emissions
-contract("Mint and Reward Token", ([manager]) => {
+contract("Mint and Reward Token", ([silverUser]) => {
 	let prestigePoints, minter 
 	
 	TIERS_IN_CONTRACT = [BRONCE, SILVER, GOLD, PLATINUM],
@@ -25,33 +25,35 @@ contract("Mint and Reward Token", ([manager]) => {
 		platinum: 3 
 	}
 
-	silverUser = '0x71f1a8f947ba7fe5662fc84fa3979d7d52731ccc' // account TVK in matic network
+	manager = silverUser;
+	// silverUser = '0x71f1a8f947ba7fe5662fc84fa3979d7d52731ccc' // account TVK in matic network
 
 	before(async function () {
 		// ERC token used to pay in the test
     	tvk   = await IERC20.at(TVK)
 		
-		// Geting TVK in user address to test
-		await hre.network.provider.request({
-			method: "hardhat_impersonateAccount",
-			params: [silverUser],
-		});
+		// // Geting TVK in user address to test
+		// await hre.network.provider.request({
+		// 	method: "hardhat_impersonateAccount",
+		// 	params: [silverUser],
+		// });
 
 		// Deploy contracts
-		prestigePoints = await PrestigePoints.new({ from: manager })
-		minter = await Minter.new(prestigePoints.address, TIERS_IN_CONTRACT, { from: manager })
+		prestigePoints = await PrestigePoints.at('0x7eaB9725f619Cd90D8852586cd92c88987B985E3')
+		minter = await Minter.at('0xdB0Bcb555A1CC16f90193c517B589a868f477edd')
 
-		// Set payment methods in minter contract
-		minter.setPaymentAllowed(TVK , true, { from: manager })
+		// // Set payment methods in minter contract
+		// await minter.setPaymentAllowed(TVK , true, { from: manager })
 
-		// Set address for the contract allowed to mint reward token
-		prestigePoints.setMinter(minter.address, { from: manager })
+		// // Set address for the contract allowed to mint reward token
+		// await prestigePoints.setMinter(minter.address, { from: manager })
 	});
 
 	it("Is all setup", async function () {
 		// Does users have ERC20 balance ?
-		assert.ok(await tvk.balanceOf(silverUser), "User balance")
-
+		const balance = Number(await tvk.balanceOf(silverUser));
+		assert.ok(balance, "User balance")
+		console.log('\tBalance user: ', balance);
 		// Does the reward token have the minter contract address assigned ?
 		assert.equal(await minter.tokenAddress(), prestigePoints.address, "Token reward is not set in the minter")
 

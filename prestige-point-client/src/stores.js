@@ -1,25 +1,44 @@
 import { writable } from 'svelte/store';
 import { readable } from 'svelte/store';
 
-const BRONZE = readable(50),
-SILVER = readable(100),
-GOLD = readable(250),
-PLATINUM = readable(500),
+const TIERS = readable([
+    {
+        tier_name: 'Bronze',
+        join_cost: 500000, 
+        tier_num: 0, 
+    },
+    {
+        tier_name: 'Silver',
+        join_cost: 1000000, 
+        tier_num: 1, 
+    },
+    {
+        tier_name: 'Gold',
+        join_cost: 2500000, 
+        tier_num: 2, 
+    },
+    {
+        tier_name: 'Platinum',
+        join_cost: 5000000, 
+        tier_num: 3, 
+    },
+]), 
 TOKEN_SIMBOL = readable('USDC'),
 REWARD_SIMBOL = readable('TVP'),
 Pay_Token_Address = readable('0x2058a9d7613eee744279e3856ef0eada5fcbaa7e'),
-Prestige_Points_Address = readable('0xF2494614843767C8B0BAbCE2eBab87e827D6e223'),
-Minter_Address = readable('0x25817DA88A754a5f74646fb01e15b46aea43aA9A'),
+Prestige_Points_Address = readable('0x752DCd366327e31d675927c43548AE6D58860FED'),
+Minter_Address = readable('0xb921e2Dc4F4804fB25b5d1C36F7E185b63CF076f'),
 web3 = writable(null),
 Logged = writable(false),
 Account = writable(null),
-ChainId = writable(null);
+User_funds = writable(0),
+User_tier = writable(-1),
+User_time = writable(0),
+ChainId = writable(null), 
+tx_OnGoing = writable(false);
 
 export { 
-    BRONZE, 
-    SILVER, 
-    GOLD, 
-    PLATINUM, 
+    TIERS, 
     TOKEN_SIMBOL, 
     REWARD_SIMBOL,
     Pay_Token_Address,
@@ -28,5 +47,9 @@ export {
     web3, 
     Logged, 
     Account, 
+    User_funds, 
+    User_tier, 
+    User_time, 
     ChainId, 
+    tx_OnGoing, 
 };

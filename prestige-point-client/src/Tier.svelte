@@ -3,7 +3,17 @@
   	import { getNotificationsContext } from "svelte-notifications";
 	import abi_minter from './abi/minter';
 	import IERC20 from './abi/IERC20';
-	import { web3, Logged, Account, Minter_Address, Pay_Token_Address } from './stores.js';
+	import {
+		web3, 
+		Logged, 
+		Account, 
+		User_tier, 
+		User_time, 
+		tx_OnGoing, 
+		User_funds, 
+		Minter_Address, 
+		Pay_Token_Address, 
+	} from './stores.js';
 
 	const { addNotification } = getNotificationsContext();
 
@@ -14,18 +24,65 @@
 			pay_token = new $web3.eth.Contract(IERC20, $Pay_Token_Address);
 			minter = new $web3.eth.Contract(abi_minter, $Minter_Address);
 			
-			if(user_funds == 0) {
+			if($User_funds == 0) {
+				let success = false;
+				tx_OnGoing.set(true);
+				addNotification({
+					text: 'Please confirm the approval',
+					position: "top-right",
+					type: "success",
+					removeAfter: 10000,
+				});	
 				try {
-				} catch (error) {
-					console.log(error);
+					await pay_token.methods.approve($Minter_Address, join_cost).send({ from: $Account })
+				} catch (err) {
+					addNotification({
+						text: 'Approve Pay error: ' + err.message,
+						position: "top-right",
+						type: "danger",
+						removeAfter: 5000,
+					})
+				} finally {
+					tx_OnGoing.set(false);
 				}
-				await minter.methods.freeze($Pay_Token_Address, tier_num).send({ from: $Account })
+				try {
+					let success = false;
+					addNotification({
+						text: 'Please confirm in MetaMask and wait this could take a minute or less',
+						position: "top-right",
+						type: "success",
+						removeAfter: 10000,
+					});	
+					success = await minter.methods.freeze($Pay_Token_Address, tier_num).send({ from: $Account })
+				} catch (err) {
+					addNotification({
+						text: 'joining Tier error: ' + err.message,
+						position: "top-right",
+						type: "danger",
+						removeAfter: 8000,
+					})
+				} finally {
+					tx_OnGoing.set(false);
+				}
+				if (success) {
+					let user_funds = (await minter.methods.investorFunds($Account).call()).funds
+					console.log('User funds: ', user_funds);
+					User_funds.set(user_funds);
+
+					let user_time = (await minter.methods.investorFunds($Account).call()).timeStart
+					console.log('User timestart: ', user_time);
+					User_time.set(user_time);
+					
+					let user_tier = Number(await minter.methods.getUserTier($Account).call())
+					console.log('User tier: ', user_tier);
+					User_tier.set(user_tier);
+				}
 			} else {
 				addNotification({
 					text: 'you can only participate in one tier per account',
 					position: "top-right",
 					type: "warning",
-					removeAfter: 5000,
+					removeAfter: 8000,
 				})
 			}
 		} else {
@@ -46,11 +103,20 @@
         <img src=".\img\{ tier_name }.jpg" alt="{ tier_name }">
         <span></span>
     </div>
-    <button class="btn tooltip" on:click={() => handleJoin()}>
-        { join_cost } { pay_token_symbol }
-        <span class="tooltiptext">
-            Join tier <i>!!</i><br>
-            Daily minimum reward { join_cost * 0.1 } { reward_token_symbol }
+    <button class="btn tooltip" on:click={() => handleJoin()} disabled={tier_name == 'Untier' || $tx_OnGoing}>
+        { join_cost / 10**6 } { pay_token_symbol } 
+		{#if $tx_OnGoing}
+			<i class="fas fa-spinner fa-pulse"></i>
+		{/if}
+		<span class="tooltiptext">
+			{#if $Logged}
+				{#if $User_tier == tier_num}
+					You are joined to this tier<br>
+				{/if}
+			{:else}
+				Join tier <i>!!</i><br>
+			{/if}
+			Daily minimum reward { (join_cost / 10**6) * 0.1 } { reward_token_symbol }
         </span>
     </button>
 </div>

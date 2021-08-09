@@ -11,7 +11,11 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: "https://matic-mainnet.chainstacklabs.com",
+        // url: "https://matic-mainnet.chainstacklabs.com",
+        url: `https://polygon-mumbai.g.alchemy.com/v2/${ process.env.ALCHEMY_MUMBAI_KEY }`,
+        accounts: [`0x${ process.env.PRIVATE_KEY }`],
+        chainID: 80001,
+        gasPrice: 20000000000,
       }
     },
     testnet: {
