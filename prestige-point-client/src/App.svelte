@@ -8,19 +8,23 @@
 	const tiers = [
 		{
 			tier_name: 'Bronze',
-			join_cost: $BRONZE 
+			join_cost: $BRONZE, 
+			tier_num: 0, 
 		},
 		{
 			tier_name: 'Silver',
-			join_cost: $SILVER
+			join_cost: $SILVER, 
+			tier_num: 1, 
 		},
 		{
 			tier_name: 'Gold',
-			join_cost: $GOLD
+			join_cost: $GOLD, 
+			tier_num: 2, 
 		},
 		{
 			tier_name: 'Platinum',
-			join_cost: $PLATINUM
+			join_cost: $PLATINUM, 
+			tier_num: 3, 
 		},
 	]
 
@@ -41,6 +45,7 @@
 				<Tier
 					tier_name = { tier.tier_name }
 					join_cost = { tier.join_cost }
+					tier_num = { tier.tier_num }
 					reward_token_symbol = { $REWARD_SIMBOL } 
 					pay_token_symbol = { $TOKEN_SIMBOL }
 				 />

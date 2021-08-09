@@ -1,5 +1,43 @@
 <script>
-    export let tier_name, join_cost, reward_token_symbol, pay_token_symbol;
+    export let tier_name, join_cost, tier_num, reward_token_symbol, pay_token_symbol;
+  	import { getNotificationsContext } from "svelte-notifications";
+	import abi_minter from './abi/minter';
+	import IERC20 from './abi/IERC20';
+	import { web3, Logged, Account, Minter_Address, Pay_Token_Address } from './stores.js';
+
+	const { addNotification } = getNotificationsContext();
+
+	let pay_token, minter;
+
+    async function handleJoin() {
+		if ($Logged) {
+			pay_token = new $web3.eth.Contract(IERC20, $Pay_Token_Address);
+			minter = new $web3.eth.Contract(abi_minter, $Minter_Address);
+			
+			if(user_funds == 0) {
+				try {
+				} catch (error) {
+					console.log(error);
+				}
+				await minter.methods.freeze($Pay_Token_Address, tier_num).send({ from: $Account })
+			} else {
+				addNotification({
+					text: 'you can only participate in one tier per account',
+					position: "top-right",
+					type: "warning",
+					removeAfter: 5000,
+				})
+			}
+		} else {
+			addNotification({
+				text: 'Connect wallet to join',
+				position: "top-right",
+				type: "danger",
+				removeAfter: 2500,
+			})
+		}
+		
+    }
 </script>
 
 <div class="tier { tier_name }">
@@ -8,7 +46,7 @@
         <img src=".\img\{ tier_name }.jpg" alt="{ tier_name }">
         <span></span>
     </div>
-    <button class="btn tooltip">
+    <button class="btn tooltip" on:click={() => handleJoin()}>
         { join_cost } { pay_token_symbol }
         <span class="tooltiptext">
             Join tier <i>!!</i><br>

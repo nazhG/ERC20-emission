@@ -4,16 +4,17 @@
   import detectEthereumProvider from '@metamask/detect-provider';
   import { getContext } from 'svelte';
   import Modal from './Modal.svelte';
-	import { Logged, Account, ChainId } from './stores.js';
+	import { web3, Logged, Account, ChainId } from './stores.js';
   
   const { open } = getContext('simple-modal');
   const { addNotification } = getNotificationsContext();
 
   onMount(async () => {
     const provider = await detectEthereumProvider();
-
     if (provider) {
       console.log('Provider: ', provider); // Initialize your app
+      console.log('Web3: ', Web3);
+      web3.set(new Web3(provider));
     } else {
       open(Modal, { message: 'Please, install MetaMask!' });
       console.log('No provider found');
