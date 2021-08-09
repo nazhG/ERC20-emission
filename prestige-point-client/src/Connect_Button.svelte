@@ -19,7 +19,9 @@
     if (provider) {
       web3.set(new Web3(provider));
     } else {
-      open(Modal, { message: 'Please, install MetaMask!' });
+      open(Modal, { message: 'To connect you will need MetaMask. 🦊',
+      linkRef: 'https://metamask.io/download',
+      linkText: 'How to download metaMask?', });
       console.log('No provider found');
     }
 
@@ -34,10 +36,13 @@
       .then(handleAccountsChanged)
       .catch((err) => {
         console.error(err);
-      });
+    });
+
+    ethereum.on('chainChanged', handleChainChanged);
+
+    ethereum.on('accountsChanged', handleAccountsChanged);
   });
 
-ethereum.on('chainChanged', handleChainChanged);
 
 function handleChainChanged(_chainId) {
   ChainId.set(_chainId);
@@ -50,8 +55,6 @@ function handleChainChanged(_chainId) {
   }
   // window.location.reload();
 }
-
-ethereum.on('accountsChanged', handleAccountsChanged);
 
 async function handleAccountsChanged(_accounts) {
   if (_accounts.length === 0) {
