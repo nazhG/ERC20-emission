@@ -100,7 +100,7 @@
 <div class="tier { tier_name }">
     <h2>{ tier_name }</h2>
     <div class="shine">
-        <img src=".\img\{ tier_name }.jpg" alt="{ tier_name }">
+        <img src=".\img\{ tier_name + '_tier' }.jpg" alt="{ tier_name }">
         <span></span>
     </div>
     <button class="btn tooltip" on:click={() => handleJoin()} disabled={tier_name == 'Untier' || $tx_OnGoing}>
