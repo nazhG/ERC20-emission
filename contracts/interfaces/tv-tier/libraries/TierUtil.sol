@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
-
-pragma solidity 0.6.12;
+pragma solidity ^0.8.0;
 
 import { ITier } from "../tier/ITier.sol";
 
@@ -10,7 +9,7 @@ import { ITier } from "../tier/ITier.sol";
 library TierUtil {
 
     /// UNINITIALIZED report is 0xFF.. as no tier has been held.
-    uint256 constant public UNINITIALIZED = uint256(-1);
+    uint256 constant public UNINITIALIZED = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 
     /// Returns the highest tier achieved relative to a block number and report.
     ///

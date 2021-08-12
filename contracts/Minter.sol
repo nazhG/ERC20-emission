@@ -1,9 +1,8 @@
 //SPDX-License-Identifier: MIT
-pragma solidity 0.6.12;
+pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { PrestigePoints } from "./PrestigePoints.sol";
 import { ValueTier } from "./interfaces/tv-tier/tier/ValueTier.sol";
@@ -13,7 +12,6 @@ import { ValueTier } from "./interfaces/tv-tier/tier/ValueTier.sol";
 /// @notice This constract let user invest and claim the reward token
 /// @dev this contract is a draft
 contract Minter is Ownable, ValueTier {
-    using SafeMath for uint256;
 
 	/// @notice Address of reward token
     address public tokenAddress;
@@ -52,7 +50,7 @@ contract Minter is Ownable, ValueTier {
     }
 
 	/// @param _tokenAddress reward token address
-    constructor(address _tokenAddress, uint256[4] memory tierValues_) public ValueTier(tierValues_){
+    constructor(address _tokenAddress, uint256[4] memory tierValues_) ValueTier(tierValues_){
 		tokenAddress = _tokenAddress;
     }
 
@@ -81,25 +79,25 @@ contract Minter is Ownable, ValueTier {
         uint256 reward = 0;
 
         // earn no bonus rate = 10%
-        uint256 rewardPerDay = investorFunds[msg.sender].funds.div(10);
+        uint256 rewardPerDay = investorFunds[msg.sender].funds / 10;
         console.log("\tDaily earn rate: ", rewardPerDay);
 
         // this calculates how many days have passed since the investment
         // 86400 seconds in a day
-        uint256 daysInvested = block.timestamp.sub(investorFunds[msg.sender].timeStart).div(86400);
+        uint256 daysInvested = ( block.timestamp - investorFunds[msg.sender].timeStart ) / 86400;
         console.log("\tDays that have passed since the investment : ", daysInvested);
 
-        reward = rewardPerDay.mul(daysInvested);
+        reward = rewardPerDay * daysInvested;
 
         // have full multipier ?
-        // 1095 = tree years
+        // 1095 days = tree years
         if (daysInvested >= 1095) {
-            reward = reward.mul(2);
+            reward <<= 1; // mul by 2 (Bit Shifts)
             console.log("\tFull Multipier : ", 2);
         } else if (daysInvested >= 1) {
             // Daily the multiplier increases 0.0009 to a maximum of 1 after tree years
-            reward += SafeMath.div(9 * reward * daysInvested, 10000);
-            console.log("\tMultipier : ", SafeMath.mul(9, daysInvested) ,"/10000");
+            reward += 9 * reward * daysInvested / 10000;
+            console.log("\tMultipier : ", 9 * daysInvested, " / 10000");
         }
 
 		PrestigePoints(tokenAddress).claimReward(
@@ -119,8 +117,8 @@ contract Minter is Ownable, ValueTier {
     /// @notice get the tier number through the user's adress
     /// @param _user user's adress
     /// @dev return -1 if is not tier
-    function getUserTier(address _user) external view returns (int) {
-        return int(valueToTier(investorFunds[_user].funds)) - 1;
+    function getUserTier(address _user) external view returns (int256) {
+        return int(uint(valueToTier(investorFunds[_user].funds))) - 1;
     }
 
 }

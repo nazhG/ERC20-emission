@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
-
-pragma solidity 0.6.12;
+pragma solidity ^0.8.0;
 
 import { ITier } from "./ITier.sol";
 
@@ -16,7 +15,7 @@ contract ValueTier {
     uint256[4] public tierValues;
 
     /// Set the `tierValues` on construction to be referenced immutably.
-    constructor(uint256[4] memory tierValues_) public {
+    constructor(uint256[4] memory tierValues_) {
         tierValues = tierValues_;
     }
 
