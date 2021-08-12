@@ -29,4 +29,9 @@ contract PrestigePoints is ERC20, Ownable {
     	console.log("\tReward minted: ", _rewardAmount);
 	}
 
+	/// @dev Prestige point minimum value is one cent
+	function decimals() public view virtual override returns (uint8) {
+        return 2;
+    }
+
 }

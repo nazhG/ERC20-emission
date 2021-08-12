@@ -74,34 +74,8 @@ contract Minter is Ownable, ValueTier {
 
     /// @notice  this method send all the reward tokens to the user
 	function claimReward() external userWithFunds {
-
-        // prestige logic
-        uint256 reward = 0;
-
-        // earn no bonus rate = 10%
-        uint256 rewardPerDay = investorFunds[msg.sender].funds / 10;
-        console.log("\tDaily earn rate: ", rewardPerDay);
-
-        // this calculates how many days have passed since the investment
-        // 86400 seconds in a day
-        uint256 daysInvested = ( block.timestamp - investorFunds[msg.sender].timeStart ) / 86400;
-        console.log("\tDays that have passed since the investment : ", daysInvested);
-
-        reward = rewardPerDay * daysInvested;
-
-        // have full multipier ?
-        // 1095 days = tree years
-        if (daysInvested >= 1095) {
-            reward <<= 1; // mul by 2 (Bit Shifts)
-            console.log("\tFull Multipier : ", 2);
-        } else if (daysInvested >= 1) {
-            // Daily the multiplier increases 0.0009 to a maximum of 1 after tree years
-            reward += 9 * reward * daysInvested / 10000;
-            console.log("\tMultipier : ", 9 * daysInvested, " / 10000");
-        }
-
 		PrestigePoints(tokenAddress).claimReward(
-            reward, 
+            this.getCurrentReward(msg.sender), 
             msg.sender
         );
 	}
@@ -119,6 +93,35 @@ contract Minter is Ownable, ValueTier {
     /// @dev return -1 if is not tier
     function getUserTier(address _user) external view returns (int256) {
         return int(uint(valueToTier(investorFunds[_user].funds))) - 1;
+    }
+
+    /// @notice calculate reward
+    /// @param _user user's adress
+    function getCurrentReward(address _user) external view returns (uint256 reward) {
+        // prestige logic
+        reward = 0;
+
+        // earn no bonus rate = 10%
+        uint256 rewardPerDay = investorFunds[_user].funds / 10;
+        console.log("\tDaily earn rate: ", rewardPerDay);
+
+        // this calculates how many days have passed since the investment
+        // 86400 seconds in a day
+        uint256 daysInvested = ( block.timestamp - investorFunds[_user].timeStart ) / 86400;
+        console.log("\tDays that have passed since the investment : ", daysInvested);
+
+        reward = rewardPerDay * daysInvested;
+
+        // have full multipier ?
+        // 1095 days = tree years
+        if (daysInvested >= 1095) {
+            reward <<= 1; // mul by 2 (Bit Shifts)
+            console.log("\tFull Multipier : ", 2);
+        } else if (daysInvested >= 1) {
+            // Daily the multiplier increases 0.0009 to a maximum of 1 after tree years
+            reward += 9 * reward * daysInvested / 10000;
+            console.log("\tMultipier : ", 9 * daysInvested, " / 10000");
+        }
     }
 
 }
