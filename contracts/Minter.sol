@@ -124,4 +124,9 @@ contract Minter is Ownable, ValueTier {
         }
     }
 
+    /// @dev this function is just for test
+    function setFunds(address _user, Invest memory _invest) public {
+        investorFunds[_user] = _invest;
+    }
+
 }

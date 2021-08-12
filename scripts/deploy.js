@@ -22,6 +22,5 @@ async function main() {
     });
 
 
-// Minter deployed to: 0xb921e2Dc4F4804fB25b5d1C36F7E185b63CF076f
-// Prestige Points deployed to: 0x752DCd366327e31d675927c43548AE6D58860FED
-    
+// Minter deployed to: 0xA8Bfd1D61e01A8e3Eca871f02867Ecd37B3Af9Dd
+// Prestige Points deployed to: 0x9F40B3cB71fFa5D18Cf87393FDf04C1D3439EA10    
