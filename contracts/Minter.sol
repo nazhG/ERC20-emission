@@ -78,6 +78,7 @@ contract Minter is Ownable, ValueTier {
             this.getCurrentReward(msg.sender), 
             msg.sender
         );
+        investorFunds[msg.sender].timeStart = block.timestamp;
 	}
 
     /// @notice this method let the user withdraw their funds
@@ -104,9 +105,10 @@ contract Minter is Ownable, ValueTier {
         // earn no bonus rate = 10%
         uint256 rewardPerDay = investorFunds[_user].funds / 10;
         console.log("\tDaily earn rate: ", rewardPerDay);
-
+        
         // this calculates how many days have passed since the investment
         // 86400 seconds in a day
+        /// TODO uncheck math
         uint256 daysInvested = ( block.timestamp - investorFunds[_user].timeStart ) / 86400;
         console.log("\tDays that have passed since the investment : ", daysInvested);
 
