@@ -2,28 +2,24 @@
 
 This is the draft, it is an initial phase of the contract that allows users to invest funds, to later obtain a reward exchangeable for NFTs.
 
+The contract are deployed in Mumbai, see the demo [**here**](https://bsdmv-wyaaa-aaaad-qankq-cai.ic.fleek.co/)
+
 [**Planing**](https://docs.google.com/document/d/1u8cs_PrxGBKHLk9jD1hM3G9rWKKh6PRRvu39L9QyFG8/edit?ts=60e5a921#heading=h.s2ybe8291aua)  
-
-[**TVK**](https://polygonscan.com/token/0x5667dcc0ab74d1b1355c3b2061893399331b57e2) in polygon
-
-[**ETH to TVK in matic network**](https://wallet.matic.network/)
-
 
 Prestige Tiers
 
- - BRONCE = 5.000 TVK
- - 	SILVER = 10.000 TVK
- - 	GOLD = 25.000 TVK
- - 	PLATINUM = 50.000 TVK
+ - BRONCE = 0.5 USDC
+ - 	SILVER = 1 USDC
+ - 	GOLD = 2.5 USDC
+ - 	PLATINUM = 5 USDC
 
-## Running tests ⚙️ _in progress_
+## Running tests ⚙️
 
 _In order to test using a mainnet fork you must set:_
 
-* [**ALCHEMY_MAIN_API_KEY**](https://dashboard.alchemyapi.io/apps)  
+* [**ALCHEMY_MUMBAI_KEY**](https://dashboard.alchemyapi.io/apps)  
 * [**COINMARKETCAP_API_KEY**](https://pro.coinmarketcap.com/account)
-* **PRIVATE_KEY** get it on metamask
-* [**ALCHEMY_MUMBAI_KEY**](https://dashboard.alchemyapi.io/)
+* **PRIVATE_KEY** is just used in deploy script
 
 _in your .env file_
 
@@ -31,10 +27,17 @@ _in your .env file_
 npm run test
 ```
 
+## Frontend _/prestige-point-client_
+
+```
+npm run dev
+```
+
 ## Built with 🛠️
 
-- [Solidity](https://docs.soliditylang.org/en/v0.6.6/)
+- [Solidity](https://docs.soliditylang.org/en/v0.8.4/)
 - [Hardhat](https://hardhat.org/) 👷
+- [Svelte](https://svelte.dev/)
 
 ## License 📄
 
