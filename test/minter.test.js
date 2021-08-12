@@ -132,6 +132,10 @@ contract("Mint and Reward Token", ([silverUser, goldUser]) => {
 			"User can not claim reward"
 
 		)
+
+		await minter.setFunds(goldUser, {timeStart: Number(await time.latest()), funds: GOLD});
+		console.log(Number(await minter.getCurrentReward(goldUser)));
+
 	});
 
 });
