@@ -84,9 +84,14 @@ contract Minter is Ownable, ValueTier {
     /// @notice this method let the user withdraw their funds
     /// @param _token address of the token that will be refund
 	function unfreeze(address _token) external userWithFunds {
+        require(investorFunds[msg.sender].funds > 0, "Minter: no funds to unfreeze");
+        if (this.getCurrentReward(msg.sender) > 0) {
+            this.claimReward();
+        }
+        console.log("Balnace ", investorFunds[msg.sender].funds);
         ERC20(_token).transfer( address(this), investorFunds[msg.sender].funds);
-        emit Unfreeze(msg.sender, _token, investorFunds[msg.sender].funds);
         investorFunds[msg.sender].funds = 0;
+        emit Unfreeze(msg.sender, _token, investorFunds[msg.sender].funds);
 	}
 
     /// @notice get the tier number through the user's adress
