@@ -21,6 +21,5 @@ async function main() {
       process.exit(1);
     });
 
-
-// Minter deployed to: 0xb0C871484eDf4Ffc99696b0bf742a88017e8BE24
-// Prestige Points deployed to: 0xA80a996007C89802A381A62c7a454166400975B4       
+// Minter deployed to: 0xE408478799d71E4E5b17D41C973A4f05354fE5DF
+// Prestige Points deployed to: 0x2399B1e496adBAF056aC087a68Ff3056d14d4C4B

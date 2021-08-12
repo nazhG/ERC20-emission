@@ -26,16 +26,18 @@ const TIERS = readable([
 TOKEN_SIMBOL = readable('USDC'),
 REWARD_SIMBOL = readable('TVP'),
 Pay_Token_Address = readable('0x2058a9d7613eee744279e3856ef0eada5fcbaa7e'),
-Prestige_Points_Address = readable('0x752DCd366327e31d675927c43548AE6D58860FED'),
-Minter_Address = readable('0xb921e2Dc4F4804fB25b5d1C36F7E185b63CF076f'),
+Prestige_Points_Address = readable('0x2399B1e496adBAF056aC087a68Ff3056d14d4C4B'),
+Minter_Address = readable('0xE408478799d71E4E5b17D41C973A4f05354fE5DF'),
 web3 = writable(null),
 Logged = writable(false),
 Account = writable(null),
 User_funds = writable(0),
 User_tier = writable(-1),
 User_time = writable(0),
+User_reward = writable(0),
 ChainId = writable(null), 
-tx_OnGoing = writable(false);
+tx_OnGoing = writable(false),
+tx_Message = writable('');
 
 export { 
     TIERS, 
@@ -50,6 +52,8 @@ export {
     User_funds, 
     User_tier, 
     User_time, 
+    User_reward, 
     ChainId, 
     tx_OnGoing, 
+    tx_Message,  
 };

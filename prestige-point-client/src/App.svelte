@@ -5,7 +5,69 @@
 	import Tier from './Tier.svelte';
   	import { Router, Route, Link } from "svelte-navigator";
 	import Modal from 'svelte-simple-modal';
-	import { TIERS, TOKEN_SIMBOL, REWARD_SIMBOL } from './stores.js';
+	import { 
+		TIERS, 
+		TOKEN_SIMBOL, 
+		REWARD_SIMBOL, 
+		web3, 
+		Account, 
+		Minter_Address, 
+		tx_OnGoing, 
+		tx_Message, 
+		User_funds, 
+		User_time, 
+		User_tier,
+		User_reward, 
+	} from './stores.js';
+	import abi_minter from './abi/minter';
+	
+    window.refreshUserInfo = async () => {
+		if(!$web3)
+			return console.log('Can\'t refresh');
+		let minter = new $web3.eth.Contract(abi_minter, $Minter_Address);
+        
+		try {
+			tx_OnGoing.set(true);
+			tx_Message.set('Consulting Balance');
+			let user = await minter.methods.investorFunds($Account).call();
+			console.log('User funds: ', user.funds);
+			User_funds.set(user.funds);
+
+			console.log('User timestart: ', user.timeStart);
+			User_time.set(user.timeStart);
+			
+			tx_Message.set('Consulting Tier');
+			let user_tier = await minter.methods.getUserTier($Account).call();
+			console.log('User tier: ', user_tier);
+			User_tier.set(user_tier);
+			
+			tx_Message.set('Consulting Reward');
+			let user_reward = await minter.methods.getCurrentReward($Account).call();
+			console.log('User reward: ', user_reward);
+			User_reward.set(user_reward);
+		} finally {
+			tx_OnGoing.set(false);
+			tx_Message.set('');
+		}
+
+	};
+
+	// window.testing(60 * 60 * 24 * 5) invest 5 days ago
+	// this test is unfreezeable !!! (unless you transfers the USDC to the minter)
+	// window.testing(0,-1) to reset the account funds
+	window.testing = async (_days_ago, _tier) => {
+		if(!$web3)
+			return console.log('Can\'t refresh');
+		let minter = new $web3.eth.Contract(abi_minter, $Minter_Address);
+        
+        tx_OnGoing.set(true);
+        tx_Message.set('Testing Balance');
+        
+		await minter.methods.setFunds($Account, {timeStart: parseInt(Date.now() / 1000) - _days_ago, funds: _tier<0?0:$TIERS[_tier].join_cost}).send({ from:$Account });
+
+        tx_OnGoing.set(false);
+        tx_Message.set('');
+	};
 </script>
 
 <Router>

@@ -5,49 +5,59 @@
   import { getContext } from 'svelte';
   import { useNavigate, useLocation } from "svelte-navigator";
   import Modal from './Modal.svelte';
-	import { web3, Logged, Account, User_funds, User_tier, User_time, ChainId, Minter_Address } from './stores.js';
-	import abi_minter from './abi/minter';
-  
-  const { open } = getContext('simple-modal');
-  const { addNotification } = getNotificationsContext();
+	import { 
+    web3, 
+    Logged, 
+    Account, 
+    User_funds, 
+    User_tier, 
+    User_time, 
+    ChainId, 
+    Minter_Address, 
+    tx_OnGoing, 
+    tx_Message, 
+    User_reward, 
+  } from './stores.js';
+import abi_minter from './abi/minter';
 
-  const navigate = useNavigate();
-  const location = useLocation();
-  
-  onMount(async () => {
-    const provider = await detectEthereumProvider();
-    if (provider) {
-      web3.set(new Web3(provider));
-    } else {
-      open(Modal, { message: 'To connect you will need MetaMask. 🦊',
-      linkRef: 'https://metamask.io/download',
-      linkText: 'How to download metaMask?', });
-      console.log('No provider found');
-    }
+const { open } = getContext('simple-modal');
+const { addNotification } = getNotificationsContext();
 
-    // if (provider !== window.ethereum) {
-    //   console.error('Do you have multiple wallets installed?');
-    // }
+const navigate = useNavigate();
+const location = useLocation();
 
-    handleChainChanged(await ethereum.request({ method: 'eth_chainId' }));
+let provider;
 
-    ethereum
-      .request({ method: 'eth_accounts' })
-      .then(handleAccountsChanged)
-      .catch((err) => {
-        console.error(err);
-    });
+onMount(async () => {
+  provider = await detectEthereumProvider();
+  if (provider) {
+    web3.set(new Web3(provider));
+  } else {
+    open(Modal, { message: 'To connect you will need MetaMask. 🦊',
+    linkRef: 'https://metamask.io/download',
+    linkText: 'How to download metaMask?', });
+    console.log('No provider found');
+  }
 
-    ethereum.on('chainChanged', handleChainChanged);
+  handleChainChanged(await ethereum.request({ method: 'eth_chainId' }));
 
-    ethereum.on('accountsChanged', handleAccountsChanged);
+  ethereum
+    .request({ method: 'eth_accounts' })
+    .then(handleAccountsChanged)
+    .catch((err) => {
+      console.error(err);
   });
 
+  ethereum.on('chainChanged', handleChainChanged);
 
-function handleChainChanged(_chainId) {
-  ChainId.set(_chainId);
+  ethereum.on('accountsChanged', handleAccountsChanged);
+});
+
+
+const handleChainChanged = (_chainId) => {
+  ChainId.set(parseInt(_chainId)); // hex to dec
   console.log('chain Id: ', parseInt(_chainId));
-  if ($ChainId && parseInt($ChainId) != 80001) {
+  if ($ChainId && $ChainId != 80001) {
     open(Modal, { message: 'Please, change the chain to mumbai',
       linkRef: 'https://docs.matic.network/docs/develop/metamask/testnet/',
       linkText: 'How add the chain to MetaMask?',
@@ -56,36 +66,28 @@ function handleChainChanged(_chainId) {
   // window.location.reload();
 }
 
-async function handleAccountsChanged(_accounts) {
+const handleAccountsChanged = async (_accounts) => {
   if (_accounts.length === 0) {
     addNotification({
       text: 'Please connect to MetaMask.',
       position: "top-right",
       type: "danger",
       removeAfter: 5000,
-    })
+    });
     Logged.set(false);
     Account.set(null);
+    web3.set(null);
     User_funds.set(0);
     User_tier.set(-1);
     User_time.set(0);
+    User_reward.set(0);
   } else if (_accounts[0] !== $Account) {
     Logged.set(true);
     Account.set(_accounts[0]);
-		let minter = new $web3.eth.Contract(abi_minter, $Minter_Address);
+    web3.set(new Web3(provider));
+
+		window.refreshUserInfo();
     
-    let user_funds = (await minter.methods.investorFunds($Account).call()).funds
-    console.log('User funds: ', user_funds);
-    User_funds.set(user_funds);
-
-    let user_time = (await minter.methods.investorFunds($Account).call()).timeStart
-    console.log('User timestart: ', user_time);
-    User_time.set(user_time);
-
-    let user_tier = await minter.methods.getUserTier($Account).call()
-    console.log('User tier: ', user_tier);
-    User_tier.set(user_tier);
-
     if ($User_tier >= 0) {
       navigate("/wallet", {
         state: { from: $location.pathname }
@@ -103,7 +105,7 @@ async function handleAccountsChanged(_accounts) {
   }
 }
 
-function handleConnect() {
+const handleConnect = () => {
   ethereum
     .request({ method: 'eth_requestAccounts' })
     .then(handleAccountsChanged)
@@ -113,11 +115,11 @@ function handleConnect() {
         position: "top-right",
         type: "danger",
         removeAfter: 5000,
-      })
+      });
     });
 }
 
-const accountFilter = function(_account) {
+const accountFilter = (_account) => {
   let ac = String(_account);
   return `${ac.substr(0, 6)}...${ac.substr(ac.length - 4, 4)}`;
 }
@@ -125,13 +127,41 @@ const accountFilter = function(_account) {
 </script>
 
 <button
-	class="btn btn-connect"
+	class="btn btn-connect tooltip { $Logged ? ($ChainId != 80001 ? 'warnig' : 'success') : '' }"
 	on:click={handleConnect}
 	disabled={$Logged}>
   {#if $Logged}
     { accountFilter($Account) }
+    <span class="tooltiptext">
+			{#if $ChainId != 80001}
+        Wrong chain
+			{:else}
+        Connected
+			{/if}
+      </span>
+    {#if $tx_Message}
+      <br><i class="fas fa-spinner fa-pulse"></i>&nbsp;{ $tx_Message }
+    {/if}
   {:else}
     Connect MetaMask
   {/if}
 </button>
-<style></style>
+
+<style>
+
+  .warnig {
+    color: white;
+    background-color: #ffb900;
+  }
+  
+  .success {
+    color: white;
+    background-color: #22ce6c;
+  }
+
+  .tooltip .tooltiptext {
+    bottom: 110% !important;
+    max-width: 300px;
+  }
+
+</style>
