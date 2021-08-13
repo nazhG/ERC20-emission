@@ -1,7 +1,7 @@
 <script>
     export let tier_name, join_cost, tier_num, reward_token_symbol, pay_token_symbol;
   	import { getNotificationsContext } from "svelte-notifications";
-	import abi_minter from './abi/minter';
+	import abi_minter from './abi/prestige';
 	import IERC20 from './abi/IERC20';
 	import {
 		web3, 

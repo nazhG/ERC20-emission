@@ -1,35 +1,28 @@
 <script>
 	import Notifications from 'svelte-notifications';
 	import Connect_Button from './Connect_Button.svelte';
-	import Wallet from './Wallet.svelte';
-	import Tier from './Tier.svelte';
+	// import Wallet from './Wallet.svelte';
+	// import Tier from './Tier.svelte';
   	import { Router, Route, Link } from "svelte-navigator";
 	import Modal from 'svelte-simple-modal';
 	import { 
-		TIERS, 
-		TOKEN_SIMBOL, 
-		REWARD_SIMBOL, 
-		web3, 
-		Account, 
-		Minter_Address, 
-		tx_OnGoing, 
-		tx_Message, 
-		User_funds, 
-		User_time, 
-		User_tier,
-		User_reward, 
+		Prestige,
+		PaymentToken,
+		Reward,
+		Connection,
+		User,
 	} from './stores.js';
-	import abi_minter from './abi/minter';
+	import abi_minter from './abi/prestige';
 	
     window.refreshUserInfo = async () => {
-		if(!$web3)
+		if(!$Connection.web3)
 			return console.log('Can\'t refresh');
-		let minter = new $web3.eth.Contract(abi_minter, $Minter_Address);
+		let minter = new $Connection.web3.eth.Contract(abi_prestige, $Prestige.address);
         
 		try {
 			tx_OnGoing.set(true);
 			tx_Message.set('Consulting Balance');
-			let user = await minter.methods.investorFunds($Account).call();
+			let user = await minter.methods.investorFunds($Connection.account).call();
 			console.log('User funds: ', user.funds);
 			User_funds.set(user.funds);
 
@@ -37,12 +30,12 @@
 			User_time.set(user.timeStart);
 			
 			tx_Message.set('Consulting Tier');
-			let user_tier = await minter.methods.getUserTier($Account).call();
+			let user_tier = await minter.methods.getUserTier($Connection.account).call();
 			console.log('User tier: ', user_tier);
 			User_tier.set(user_tier);
 			
 			tx_Message.set('Consulting Reward');
-			let user_reward = await minter.methods.getCurrentReward($Account).call();
+			let user_reward = await minter.methods.getCurrentReward($Connection.account).call();
 			console.log('User reward: ', user_reward);
 			User_reward.set(user_reward);
 		} finally {
@@ -56,14 +49,14 @@
 	// this test is unfreezeable !!! (unless you transfers the USDC to the minter)
 	// window.testing(0,-1) to reset the account funds
 	window.testing = async (_days_ago, _tier) => {
-		if(!$web3)
+		if(!$Connection.web3)
 			return console.log('Can\'t refresh');
-		let minter = new $web3.eth.Contract(abi_minter, $Minter_Address);
+		let minter = new $Connection.web3.eth.Contract(abi_prestige, $Prestige.address);
         
         tx_OnGoing.set(true);
         tx_Message.set('Testing Balance');
         
-		await minter.methods.setFunds($Account, {timeStart: parseInt(Date.now() / 1000) - _days_ago, funds: _tier<0?0:$TIERS[_tier].join_cost}).send({ from:$Account });
+		await minter.methods.setFunds($Connection.account, {timeStart: parseInt(Date.now() / 1000) - _days_ago, funds: _tier<0?0:$Prestige.tier[_tier].join_cost}).send({ from:$Connection.account });
 
         tx_OnGoing.set(false);
         tx_Message.set('');
@@ -86,7 +79,7 @@
 		</nav>
 		<Connect_Button />
 	</header>
-	<main>
+	<!-- <main>
 		<br>
 		<Route path="wallet">
 			<Wallet />
@@ -109,7 +102,7 @@
 				connect your wallet and start earning <i>Prestige Token</i> changebles for a NFT Reward in <a href="https://terravirtua.io/marketplace">Terra virtua</a>.
 			</p>
 		</Route>
-	</main>
+	</main> -->
 	<footer>
 		<p>&copy; Copyright 2021.</p>
 	</footer>
