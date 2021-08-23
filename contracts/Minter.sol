@@ -5,16 +5,25 @@ import "hardhat/console.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { PrestigePoints } from "./PrestigePoints.sol";
-import { ValueTier } from "./interfaces/tv-tier/tier/ValueTier.sol";
+import { TierUtil } from "./interfaces/tv-tier/libraries/TierUtil.sol";
+import { ITier } from "./interfaces/tv-tier/tier/ITier.sol";
+import { Tier } from "./Tier.sol";
+import { ReadWriteTier } from "./interfaces/tv-tier/tier/ReadWriteTier.sol";
 
 /// @title Terra Virtual Rewards Minter
 /// @author nazhG
 /// @notice This constract let user invest and claim the reward token
 /// @dev this contract is a draft
-contract Minter is Ownable, ValueTier {
+contract Minter is Ownable {
 
 	/// @notice Address of reward token
     address public tokenAddress;
+
+	/// @notice Address of the token used in payments
+    address public paymentTokenAddress;
+
+	/// @notice Address of the tier contracts
+    address public tierAddress;
 
     /// store the funds and when was freezed
     struct Invest {
@@ -26,13 +35,9 @@ contract Minter is Ownable, ValueTier {
     /// user address => token used to invest => user balance of that token
     mapping(address => Invest) public investorFunds;
 
-    /// @notice All ERC20 all tokens with what can be used to pay
-    mapping(address => bool) public paymentAllowed;
-
     /// @notice user invest
     event Freeze(
         address indexed user,
-        address token,
         uint256 amount
     );
 
@@ -43,37 +48,40 @@ contract Minter is Ownable, ValueTier {
         uint256 amount
     );
 
-    /// @notice For method that need that user (msg.sender) have funds
-    modifier userWithFunds () {
-        require(investorFunds[msg.sender].funds > 0,"Minter: User without funds");
-        _;
-    }
-
 	/// @param _tokenAddress reward token address
-    constructor(address _tokenAddress, uint256[4] memory tierValues_) ValueTier(tierValues_){
+    constructor(address _tokenAddress, address _paymentTokenAddress, address _tierAddress) {
 		tokenAddress = _tokenAddress;
+		paymentTokenAddress = _paymentTokenAddress;
+		tierAddress = _tierAddress;
     }
 
-    /// @notice Allows to use or stop using a token to freeze
-    /// @param _token address of a ERC20 to set allowance
-    /// @param _status true = can be used to freeze, false = can not be used to freeze
-    /// @dev this method should be called after deploy to have at least one payment method
-    function setPaymentAllowed(address _token, bool _status) onlyOwner external {
-        paymentAllowed[_token] = _status;
+    function isTier(address account_, ITier.Tier minimumTier_) public view returns (bool) {
+        return 0 != TierUtil.tierBlock( Tier(tierAddress).report(account_), minimumTier_) &&
+            TierUtil.tierBlock( Tier(tierAddress).report(account_), minimumTier_) != uint256(0xFFFFFFFF);
+    }
+
+    /// @param account_ Account to enforce tier of.
+    /// @param minimumTier_ Minimum tier for the account.
+    modifier onlyTier(address account_, ITier.Tier minimumTier_) {
+        _;
+        require(
+            isTier(account_, minimumTier_),
+            "MINIMUM_TIER"
+        );
     }
 
     /// @notice let the user freeze a asset, approval is needed to transfer 
-    /// @param _token address of a ERC20 used to invest
-    /// @param _tier that user want to be
-	function freeze(address _token, uint256 _tier) external {
-		require(paymentAllowed[_token], "Minter: Token not allowed");
-        ERC20(_token).transferFrom(msg.sender, address(this), ValueTier.tierValues[_tier]);
-        emit Freeze(msg.sender, _token, ValueTier.tierValues[_tier]);
-        investorFunds[msg.sender] = Invest(block.timestamp, ValueTier.tierValues[_tier]);
+    /// @param _funds is how much it will freezed
+	function freeze(uint256 _funds) external {
+        ERC20(paymentTokenAddress).transferFrom(msg.sender, address(this), _funds);
+        emit Freeze(msg.sender, _funds);
+        Tier(tierAddress).setTier(msg.sender, Tier(tierAddress).maxTier(_funds), "");
+        investorFunds[msg.sender].funds = _funds;
+        investorFunds[msg.sender].timeStart = block.timestamp;
 	}
 
     /// @notice  this method send all the reward tokens to the user
-	function claimReward() external userWithFunds {
+	function claimReward() external onlyTier(msg.sender, ITier.Tier.ONE) {
 		PrestigePoints(tokenAddress).claimReward(
             this.getCurrentReward(msg.sender), 
             msg.sender
@@ -82,24 +90,16 @@ contract Minter is Ownable, ValueTier {
 	}
 
     /// @notice this method let the user withdraw their funds
-    /// @param _token address of the token that will be refund
-	function unfreeze(address _token) external userWithFunds {
+	function unfreeze() external onlyTier(msg.sender, ITier.Tier.ONE) {
         require(investorFunds[msg.sender].funds > 0, "Minter: no funds to unfreeze");
         if (this.getCurrentReward(msg.sender) > 0) {
             this.claimReward();
         }
         console.log("Balnace ", investorFunds[msg.sender].funds);
-        ERC20(_token).transfer( address(this), investorFunds[msg.sender].funds);
+        ERC20(paymentTokenAddress).transfer( address(this), investorFunds[msg.sender].funds);
         investorFunds[msg.sender].funds = 0;
-        emit Unfreeze(msg.sender, _token, investorFunds[msg.sender].funds);
+        emit Unfreeze(msg.sender, paymentTokenAddress, investorFunds[msg.sender].funds);
 	}
-
-    /// @notice get the tier number through the user's adress
-    /// @param _user user's adress
-    /// @dev return -1 if is not tier
-    function getUserTier(address _user) external view returns (int256) {
-        return int(uint(valueToTier(investorFunds[_user].funds))) - 1;
-    }
 
     /// @notice calculate reward
     /// @param _user user's adress
@@ -135,5 +135,4 @@ contract Minter is Ownable, ValueTier {
     function setFunds(address _user, Invest memory _invest) public {
         investorFunds[_user] = _invest;
     }
-
 }

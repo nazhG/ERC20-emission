@@ -2,18 +2,23 @@
 pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
+import { ITier } from "./interfaces/tv-tier/tier/ITier.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { TierByConstructionClaim } from "./interfaces/tv-tier/claim/TierByConstructionClaim.sol";
 
 /// @title Terra Virtual Rewards Token
 /// @author nazhG
 /// @notice This token is used to redeem NFT in terra virtua
 /// @dev this contract is a draft
-contract PrestigePoints is ERC20, Ownable {
+contract PrestigePoints is ERC20/*, TierByConstructionClaim*/, Ownable {
 	/// @notice Address of the contract with the logic to gives the rewards to the user
     address public minter;
 		
-    constructor() ERC20("TVP", "Terra Virtual Prestige") {}
+    constructor(/*ITier tier_*/) 
+		// TierByConstructionClaim(tier_, ITier.Tier.FOUR)
+		ERC20("TVP", "Terra Virtual Prestige") 
+	{}
 
 	/// @notice set the contract address that will be authorized to generate rewards
 	/// @param _minter address of minter contract

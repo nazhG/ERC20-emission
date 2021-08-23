@@ -4,13 +4,20 @@ USDC = 10e6, // number of Decimales of ERC20 used
 BRONZE = .5*USDC,
 SILVER = 1*USDC,
 GOLD = 2.5*USDC,
-PLATINUM = 5*USDC
+PLATINUM = 5*USDC, 
+TIERS = [
+  BRONZE, 
+  SILVER, 
+  GOLD, 
+  PLATINUM, 
+  '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 
+  '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 
+  '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 
+  '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 
+]
 
 module.exports = {
   USDC_ADDRESS, 
-  USDC,
-  BRONZE,
-  SILVER,
-  GOLD,
-  PLATINUM,
+  USDC, 
+  TIERS, 
 }
