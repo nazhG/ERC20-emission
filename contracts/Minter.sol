@@ -96,9 +96,10 @@ contract Minter is Ownable {
             this.claimReward();
         }
         console.log("Balnace ", investorFunds[msg.sender].funds);
-        ERC20(paymentTokenAddress).transfer( address(this), investorFunds[msg.sender].funds);
+        ERC20(paymentTokenAddress).transfer( msg.sender, investorFunds[msg.sender].funds);
         investorFunds[msg.sender].funds = 0;
         emit Unfreeze(msg.sender, paymentTokenAddress, investorFunds[msg.sender].funds);
+        Tier(tierAddress).setTier(msg.sender, ITier.Tier(1), "");
 	}
 
     /// @notice calculate reward

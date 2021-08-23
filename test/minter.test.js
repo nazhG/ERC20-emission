@@ -58,6 +58,11 @@ contract("Mint and Reward Token", ([silverUser, goldUser]) => {
 		const investment = 1*USDC
 		await usdc.approve(minter.address, investment, { from:silverUser })
 		await minter.freeze(investment, { from:silverUser })
+		
+		assert.isNotOk(
+			Boolean(await minter.isTier(silverUser, 0)),
+			"User is not un tier"
+		)
 
 		const userFunds = Number((await minter.investorFunds(silverUser)).funds)
 		
@@ -104,7 +109,34 @@ contract("Mint and Reward Token", ([silverUser, goldUser]) => {
 			silverUserReward,
 			"User can not claim reward"
 		)
+	});
+
+	it("Should unfrezze", async function () {
+		// advance time
+		// await time.increase(time.duration.days(10));
 		
+		const userInitialFunds = Number((await minter.investorFunds(silverUser)).funds)
+		const inicialUsdcBalance = Number(await usdc.balanceOf(silverUser))
+		
+		await minter.unfreeze({ from:silverUser })
+		
+		const userFinalFunds = Number((await minter.investorFunds(silverUser)).funds)
+		const finalBalance = Number(await usdc.balanceOf(silverUser))
+		assert.equal(
+			userFinalFunds,
+			0,
+			"Contract funds are not updated"
+		)
+		assert.equal(
+			inicialUsdcBalance + userInitialFunds,
+			finalBalance,
+			"Contract do not transfer back to the user"
+		)
+		// console.log(await minter.isTier(silverUser, 1))
+		// assert.isNotOk(
+		// 	Boolean(await minter.isTier(silverUser, 1)),
+		// 	"User is not un tier"
+		// )
 	});
 	
 	it("Should use the test function", async function () {
