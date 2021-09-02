@@ -15,8 +15,7 @@ contract PrestigePoints is ERC20/*, TierByConstructionClaim*/, Ownable {
 	/// @notice Address of the contract with the logic to gives the rewards to the user
     address public minter;
 		
-    constructor(/*ITier tier_*/) 
-		// TierByConstructionClaim(tier_, ITier.Tier.FOUR)
+    constructor() 
 		ERC20("TVP", "Terra Virtual Prestige") 
 	{}
 
