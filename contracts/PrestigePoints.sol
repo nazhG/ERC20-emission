@@ -13,7 +13,9 @@ contract PrestigePoints is ERC20, Ownable {
 	/// @notice Address of the contract with the logic to gives the rewards to the user
     address public minter;
 		
-    constructor() ERC20("TVP", "Terra Virtual Prestige") {}
+    constructor() 
+		ERC20("TVP", "Terra Virtual Prestige") 
+	{}
 
 	/// @notice set the contract address that will be authorized to generate rewards
 	/// @param _minter address of minter contract
