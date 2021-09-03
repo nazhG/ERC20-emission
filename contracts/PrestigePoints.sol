@@ -11,7 +11,7 @@ import { TierByConstructionClaim } from "./interfaces/tv-tier/claim/TierByConstr
 /// @author nazhG
 /// @notice This token is used to redeem NFT in terra virtua
 /// @dev this contract is a draft
-contract PrestigePoints is ERC20/*, TierByConstructionClaim*/, Ownable {
+contract PrestigePoints is ERC20, Ownable {
 	/// @notice Address of the contract with the logic to gives the rewards to the user
     address public minter;
 		

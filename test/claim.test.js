@@ -8,7 +8,7 @@ const {
 const BN = require("bn.js");
 const { assert, ethers, upgrades } = require("hardhat");
 
-const { USDC_ADDRESS, BRONZE, SILVER, GOLD, PLATINUM, } = require("./token_address")
+const { USDC_ADDRESS, TIERS, USDC } = require("./token_address")
 const IERC20 = artifacts.require("IERC20")
 
 const toWei = (value) => web3.utils.toWei(String(value))
@@ -16,49 +16,6 @@ const toWei = (value) => web3.utils.toWei(String(value))
 /// Test of draft for the ERC20 emissions
 contract("Mint and Reward Token", ([silverUser, goldUser]) => {
 	let prestigePoints, claim, tier, usdc;
-	
-	TIERS = [
-		{
-			num: 0,
-			value: BRONZE, 
-			name: 'bronze', 
-		},
-		{
-			num: 1,
-			value: SILVER, 
-			name: 'silver', 
-		},
-		{
-			num: 2,
-			value: GOLD, 
-			name: 'gold', 
-		},
-		{
-			num: 3,
-			value: PLATINUM, 
-			name: 'platinum', 
-		}, 
-		{
-			num: 4,
-			value: '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 
-			name: 'dummy5', 
-		}, 
-		{
-			num: 5,
-			value: '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 
-			name: 'dummy6', 
-		}, 
-		{
-			num: 6,
-			value: '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 
-			name: 'dummy7', 
-		}, 
-		{
-			num: 7,
-			value: '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 
-			name: 'dummy8', 
-		}, 
-	]
 
 	manager = '0x5044531067a7605E68CE01b436837414e5623eEe' // account with USDC in Mumbai network
 
@@ -74,10 +31,10 @@ contract("Mint and Reward Token", ([silverUser, goldUser]) => {
 
 		// Deployed contracts
 		prestigePoints = await PrestigePoints.new({ from: manager })
-		tier = await Tier.new(USDC_ADDRESS, TIERS.map(i => i.value), { from: manager })
+		tier = await Tier.new(USDC_ADDRESS, TIERS, { from: manager })
 		
 		const Claim = await ethers.getContractFactory("Claim")
-		claim = await upgrades.deployProxy(Claim, [prestigePoints.address, tier.address])
+		claim = await upgrades.deployProxy(Claim, [prestigePoints.address, tier.address, 86400 /** difficulty for test = 1 day */])
 		await claim.deployed()
 		prestigePoints.setMinter(claim.address, { from: manager })
 	});
@@ -89,12 +46,22 @@ contract("Mint and Reward Token", ([silverUser, goldUser]) => {
 	});
 
 	it("Accumulating reward", async function () {
-		const currentBlock = Number(await time.latestBlock())
-		await time.advanceBlockTo(currentBlock + 300)
-		assert.equal(Number(await claim.getReward(silverUser)), 300, 'There is not reward')
+		const currentBlock = Number(await time.latestBlock()),
+			tenPercent = Number((await tier.tierValues())[2]) * 0.1, // user earn ten percent of the tier
+			daysNum = 300,
+			dailyMul = 0.0009, // daily multiplier
+			multiplier = daysNum * dailyMul + 1, // final multiplier
+			reward = Math.floor(tenPercent * daysNum * multiplier);
+
+		await time.advanceBlockTo(currentBlock + daysNum)
+
+		assert.equal(Number(await claim.getReward(silverUser)), reward, 'There is not reward')
+		await claim.setShowConsole(false);
+
 		await claim.claim({from: silverUser})
+
 		assert.equal(Number(await claim.getReward(silverUser)), 0, 'Reward no discount')
-		assert.equal(Number(await prestigePoints.balanceOf(silverUser)), 301, 'Points claimed')
+		assert.isAbove(Number(await prestigePoints.balanceOf(silverUser)), reward, 'Points claimed')
 	});
 
 })
