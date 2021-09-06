@@ -7,20 +7,19 @@ import { PrestigePoints } from "./PrestigePoints.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { TierUtil } from "./interfaces/tv-tier/libraries/TierUtil.sol";
 import { ERC20TransferTier } from "./interfaces/tv-tier/tier/ERC20TransferTier.sol";
-import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /// @title Terra Virtual Rewards Minter
 /// @author nazhG
 /// @notice This constract let user invest and claim the reward token
 /// @dev this contract is a draft
-contract Claim is Initializable, OwnableUpgradeable {
+contract Claim is ERC20 {
 
     address tokenAddress;
     address tierAddress;
     uint256 difficulty; /// in seconds
 
     bool public showConsole;
-
+    
     function setShowConsole(bool _showConsole) public {
         showConsole = _showConsole;
     }
@@ -30,19 +29,23 @@ contract Claim is Initializable, OwnableUpgradeable {
 
 	/// @param _tokenAddress reward token address
 	/// @param _tierAddress tier contract address
-    function initialize(address _tokenAddress,address _tierAddress, uint256 _difficulty) public initializer {
+    constructor (address _tokenAddress,address _tierAddress, uint256 _difficulty)
+	    ERC20("TVP", "Terra Virtual Prestige") {
 		tokenAddress = _tokenAddress;
 		tierAddress = _tierAddress;
 		difficulty = _difficulty;
         
         showConsole = true;
     }
+    
+	/// @notice this method let to the Minter contract to send reward tokens to users
+	/// @dev this methos mints tokens
+	function claimReward(uint256 _rewardAmount, address _usersAdress) internal {
+        _mint(_usersAdress, _rewardAmount);
+    	console.log("\tReward minted: ", _rewardAmount);
+	}
 
-    function setDifficulty(uint256 _difficulty) external onlyOwner {
-        difficulty = _difficulty;
-    }
-
-    function getReward(address account_) external view returns(uint256 reward) {
+    function getReward(address account_) public view returns(uint256 reward) {
         uint256 report_ = ERC20TransferTier(tierAddress).report(account_);
         // block number that passed since the user joined the tier
         // using the block when de user join the tier or the last block number when teh user claim
