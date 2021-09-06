@@ -1,5 +1,6 @@
 const Tier = artifacts.require("ERC20TransferTier")
-const PrestigePoints = artifacts.require("PrestigePoints")
+const Claim = artifacts.require("Claim")
+const IERC20 = artifacts.require("IERC20")
 const {
 	expectEvent,
 	expectRevert,
@@ -9,7 +10,6 @@ const BN = require("bn.js");
 const { assert, ethers, upgrades } = require("hardhat");
 
 const { USDC_ADDRESS, TIERS, USDC } = require("./token_address")
-const IERC20 = artifacts.require("IERC20")
 
 const toWei = (value) => web3.utils.toWei(String(value))
 
@@ -30,19 +30,14 @@ contract("Mint and Reward Token", ([silverUser, goldUser]) => {
 		});
 
 		// Deployed contracts
-		prestigePoints = await PrestigePoints.new({ from: manager })
 		tier = await Tier.new(USDC_ADDRESS, TIERS, { from: manager })
-		
-		const Claim = await ethers.getContractFactory("Claim")
-		claim = await upgrades.deployProxy(Claim, [prestigePoints.address, tier.address, 86400 /** difficulty for test = 1 day */])
-		await claim.deployed()
-		prestigePoints.setMinter(claim.address, { from: manager })
+		claimer = await Claim.new(tier.address, 86400, { from: manager })
 	});
 
 	it("Joining tier", async function () {
 		await usdc.approve(tier.address, Number((await tier.tierValues())[2]), {from: silverUser})
 		await tier.setTier(silverUser, 2, [], {from: silverUser})
-		assert.equal(Number(await claim.getTier(silverUser)), 2, "tier not set")
+		assert.equal(Number(await claimer.getTier(silverUser)), 2, "tier not set")
 	});
 
 	it("Accumulating reward", async function () {
@@ -55,13 +50,13 @@ contract("Mint and Reward Token", ([silverUser, goldUser]) => {
 
 		await time.advanceBlockTo(currentBlock + daysNum)
 
-		assert.equal(Number(await claim.getReward(silverUser)), reward, 'There is not reward')
-		await claim.setShowConsole(false);
+		assert.equal(Number(await claimer.getReward(silverUser)), reward, 'There is not reward')
+		await claimer.setShowConsole(false);
 
-		await claim.claim({from: silverUser})
+		await claimer.claim({from: silverUser})
 
-		assert.equal(Number(await claim.getReward(silverUser)), 0, 'Reward no discount')
-		assert.isAbove(Number(await prestigePoints.balanceOf(silverUser)), reward, 'Points claimed')
+		assert.equal(Number(await claimer.getReward(silverUser)), 0, 'Reward no discount')
+		assert.isAbove(Number(await claimer.balanceOf(silverUser)), reward, 'Points claimed')
 	});
 
 })
