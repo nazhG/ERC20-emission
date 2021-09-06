@@ -1,21 +1,15 @@
 const Tier = artifacts.require("ERC20TransferTier")
 const Claim = artifacts.require("Claim")
 const IERC20 = artifacts.require("IERC20")
-const {
-	expectEvent,
-	expectRevert,
-	time,
-  } = require("@openzeppelin/test-helpers")
-const BN = require("bn.js");
-const { assert, ethers, upgrades } = require("hardhat");
+const { time } = require("@openzeppelin/test-helpers")
+const { assert } = require("hardhat");
 
-const { USDC_ADDRESS, TIERS, USDC } = require("./token_address")
-
-const toWei = (value) => web3.utils.toWei(String(value))
+const { USDC_ADDRESS, TIERS } = require("./token_address")
 
 /// Test of draft for the ERC20 emissions
-contract("Mint and Reward Token", ([silverUser, goldUser]) => {
-	let prestigePoints, claim, tier, usdc;
+contract("Mint and Reward Token", ([silverUser]) => {
+	let claimer, tier, usdc, // contracts
+	reward;
 
 	manager = '0x5044531067a7605E68CE01b436837414e5623eEe' // account with USDC in Mumbai network
 
@@ -42,17 +36,19 @@ contract("Mint and Reward Token", ([silverUser, goldUser]) => {
 
 	it("Accumulating reward", async function () {
 		const currentBlock = Number(await time.latestBlock()),
-			tenPercent = Number((await tier.tierValues())[2]) * 0.1, // user earn ten percent of the tier
-			daysNum = 300,
-			dailyMul = 0.0009, // daily multiplier
-			multiplier = daysNum * dailyMul + 1, // final multiplier
-			reward = Math.floor(tenPercent * daysNum * multiplier);
-
+		tenPercent = Number((await tier.tierValues())[2]) * 0.1, // user earn ten percent of the tier
+		daysNum = 300,
+		dailyMul = 0.0009, // daily multiplier
+		multiplier = daysNum * dailyMul + 1; // final multiplier
+		reward = Math.floor(tenPercent * daysNum * multiplier);
+		
 		await time.advanceBlockTo(currentBlock + daysNum)
-
+		
 		assert.equal(Number(await claimer.getReward(silverUser)), reward, 'There is not reward')
 		await claimer.setShowConsole(false);
-
+	});
+		
+	it("Claiming reward", async function () {
 		await claimer.claim({from: silverUser})
 
 		assert.equal(Number(await claimer.getReward(silverUser)), 0, 'Reward no discount')
