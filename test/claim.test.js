@@ -6,8 +6,14 @@ const { assert } = require("hardhat");
 
 const { USDC_ADDRESS, TIERS } = require("./token_address")
 
+function calculateReward(_tierValue, _time) {
+	const rewardPerBlock = _tierValue / 15552000,
+	multiplier = (_time / 46656000) + 1; // final multiplier
+	return Math.floor(rewardPerBlock * _time * multiplier)
+}
+
 /// Test of draft for the ERC20 emissions
-contract("Mint and Reward Token", ([silverUser]) => {
+contract("Mint and Reward Token", ([silverUser, goldUser, bronzeUser]) => {
 	let claimer, tier, usdc, // contracts
 	reward;
 
@@ -22,10 +28,14 @@ contract("Mint and Reward Token", ([silverUser]) => {
 			method: "hardhat_impersonateAccount",
 			params: [manager],
 		});
+		await usdc.transfer(silverUser, TIERS[2], {from: manager})
+		await usdc.transfer(goldUser, TIERS[3], {from: manager})
+		await usdc.transfer(bronzeUser, TIERS[3], {from: manager})
+
 
 		// Deployed contracts
 		tier = await Tier.new(USDC_ADDRESS, TIERS, { from: manager })
-		claimer = await Claim.new(tier.address, 86400, { from: manager })
+		claimer = await Claim.new(tier.address, { from: manager })
 	});
 
 	it("Joining tier", async function () {
@@ -34,25 +44,54 @@ contract("Mint and Reward Token", ([silverUser]) => {
 		assert.equal(Number(await claimer.getTier(silverUser)), 2, "tier not set")
 	});
 
+	//more test, with peson that change tiers+
 	it("Accumulating reward", async function () {
 		const currentBlock = Number(await time.latestBlock()),
-		tenPercent = Number((await tier.tierValues())[2]) * 0.1, // user earn ten percent of the tier
-		daysNum = 300,
-		dailyMul = 0.0009, // daily multiplier
-		multiplier = daysNum * dailyMul + 1; // final multiplier
-		reward = Math.floor(tenPercent * daysNum * multiplier);
+		blocksToAdvance = 4000 /** one month */,
+		tierValue = Number((await tier.tierValues())[2]);
+		reward = calculateReward(tierValue, blocksToAdvance);
+		await time.advanceBlockTo(currentBlock + blocksToAdvance)
 		
-		await time.advanceBlockTo(currentBlock + daysNum)
-		
-		assert.equal(Number(await claimer.getReward(silverUser)), reward, 'There is not reward')
-		await claimer.setShowConsole(false);
+		assert.closeTo(Number(await claimer.getReward(silverUser)), reward, 3, 'There is not reward')
 	});
 		
 	it("Claiming reward", async function () {
 		await claimer.claim({from: silverUser})
 
 		assert.equal(Number(await claimer.getReward(silverUser)), 0, 'Reward no discount')
-		assert.isAbove(Number(await claimer.balanceOf(silverUser)), reward, 'Points claimed')
+		assert.closeTo(Number(await claimer.balanceOf(silverUser)), reward, 3, 'Points claimed')
+	});		
+
+	it("When tier up", async function () {
+		await usdc.approve(tier.address, Number((await tier.tierValues())[2]), {from: goldUser})
+		await tier.setTier(goldUser, 2, [], {from: goldUser})
+		const blocksToAdvance = 1000;
+		await time.advanceBlockTo(Number(await time.latestBlock()) + blocksToAdvance)
+		
+		await usdc.approve(tier.address, Number((await tier.tierValues())[3]), {from: goldUser})
+		await tier.setTier(goldUser, 3, [], {from: goldUser})
+		await time.advanceBlockTo(Number(await time.latestBlock()) + blocksToAdvance)
+
+		const  tierValue = Number((await tier.tierValues())[3]);
+		reward = calculateReward(tierValue, blocksToAdvance);
+
+		assert.closeTo(Number(await claimer.getReward(goldUser)), reward, 3, 'There is not reward')
+	});
+
+	it("When tier down", async function () {
+		await usdc.approve(tier.address, Number((await tier.tierValues())[3]), {from: bronzeUser})
+		await tier.setTier(bronzeUser, 3, [], {from: bronzeUser})
+		const blocksToAdvance = 1000;
+		await time.advanceBlockTo(Number(await time.latestBlock()) + blocksToAdvance)
+		
+		await usdc.approve(tier.address, Number((await tier.tierValues())[1]), {from: bronzeUser})
+		await tier.setTier(bronzeUser, 1, [], {from: bronzeUser})
+		await time.advanceBlockTo(Number(await time.latestBlock()) + blocksToAdvance)
+
+		const  tierValue = Number((await tier.tierValues())[1]);
+		reward = calculateReward(tierValue, blocksToAdvance * 2);
+		
+		assert.closeTo(Number(await claimer.getReward(bronzeUser)), reward, 3, 'There is not reward')
 	});
 
 })

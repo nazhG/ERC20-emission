@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "hardhat/console.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { TierUtil } from "./interfaces/tv-tier/libraries/TierUtil.sol";
 import { ERC20TransferTier } from "./interfaces/tv-tier/tier/ERC20TransferTier.sol";
+import "hardhat/console.sol";
 
 /// @title Terra Virtual Rewards Minter
 /// @author nazhG
@@ -12,69 +12,39 @@ import { ERC20TransferTier } from "./interfaces/tv-tier/tier/ERC20TransferTier.s
 /// @dev #draft
 contract Claim is ERC20 {
 
-    address tierAddress;
-    uint256 difficulty; /// in seconds
-
-    /// @dev Debug tool
-    bool public showConsole;
-    function setShowConsole(bool _showConsole) public {
-        showConsole = _showConsole;
-    }
+    address immutable tierAddress;
 
     // store the block number when user claimed
     mapping(address => uint256) lastClaim;
 
-	/// @param _tierAddress contract that stores the tier
-	/// @param _difficulty block mining time in second
-    constructor (address _tierAddress, uint256 _difficulty)
+    constructor (address _tierAddress)
 	    ERC20("TVP", "Terra Virtual Prestige") {
-		tierAddress = _tierAddress;
-		difficulty = _difficulty;
-        
-        showConsole = true;
+        tierAddress = _tierAddress;
     }
 
     /// @notice reward calculation
-    /// @dev Debug tool
     function getReward(address account_) public view returns(uint256 reward) {
-        // The reward is calculated based on how many days the user stayed in the tier
-        // and has a multiplier that increases linearly up to a maximum of 2X for maintaining a tier 3 years
 
         uint256 report_ = ERC20TransferTier(tierAddress).report(account_);
-        // block numbers that passed since the user joined the tier
-        uint256 joinBlock = uint256(uint32(uint256(report_ >> ((getTier(account_)-1)*32))));
 
-        reward = 0;
+        uint256 userJoinBlockNumber = uint256(uint32(uint256(report_ >> ((getTier(account_)-1)*32))));
 
-        // earn rate (without bonus) = 10% of the tier value
-        uint256 rewardPerDay =  (ERC20TransferTier(tierAddress).tierValues())[getTier(account_)] / 10;
+        // The objective of the following calculation is that a user after one year can have a 100% return on his investment
+        // the polygon network takes 2s to mine a block so if you divide the number of seconds in a year we have
+        // 60s * 60min * 24h * 30days * 12months / 2s (difuculty) = 15552000
+        uint256 rewardPerBlocks =  ((ERC20TransferTier(tierAddress).tierValues())[getTier(account_)] / 15552);
         
-        // this calculates how many days have passed since the investment 
-        // or the last claim made by the user
-        // mul for the difficulty, to get the time
-        // and div by 86400 (one day) to get the days that the user spent in the tier since the last claim
-        uint256 daysInvested = ((block.number - (lastClaim[msg.sender] > joinBlock ? lastClaim[msg.sender]:joinBlock)) * difficulty) / 86400;
-
-        if (showConsole) {
-            console.log("\tDaily earn rate: ", rewardPerDay);
-            console.log("\tDays that have passed since the investment : ", daysInvested);
-        }
-
-        reward = rewardPerDay * daysInvested;
-
-        // multipier
-        // 1095 days = tree years
-        if (daysInvested >= 1095) {
+        // Number of difference blocks since the investment or the last user claim
+        uint256 diffBlocksSinceInvest = (block.number - (lastClaim[msg.sender] > userJoinBlockNumber ?
+            lastClaim[msg.sender]:userJoinBlockNumber
+        ));
+        reward = rewardPerBlocks * diffBlocksSinceInvest / 1000;
+        // Multipier
+        // Users can have a multiplier on their reward up to a maximum of 100% with 3 years in a tier
+        if (diffBlocksSinceInvest >= 46656000) {
             reward <<= 1; // mul by 2
-            if (showConsole) {
-                console.log("\tFull Multipier : ", 2);
-            }
-        } else if (daysInvested >= 1) {
-            // Daily the multiplier increases 0.0009 to a maximum of 1095 after days (tree years)
-            reward += 9 * reward * daysInvested / 10000;
-            if (showConsole) {
-                console.log("\tMultipier : ", 9 * daysInvested, " / 10000");
-            }
+        } else if (diffBlocksSinceInvest >= 1) {
+            reward += (reward * diffBlocksSinceInvest / 46656) / 1000;
         }
     }
 
@@ -82,7 +52,7 @@ contract Claim is ERC20 {
     function claim() external {
         require(getReward(msg.sender) > 0, "Claimer: no reward to claim");
         _mint(msg.sender, getReward(msg.sender));
-    	console.log("\tReward minted: ", getReward(msg.sender));
+        
         lastClaim[msg.sender] = block.number;
     }
 
