@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { TierUtil } from "./interfaces/tv-tier/libraries/TierUtil.sol";
 import { ERC20TransferTier } from "./interfaces/tv-tier/tier/ERC20TransferTier.sol";
-import "hardhat/console.sol";
 
 /// @title Terra Virtual Rewards Minter
 /// @author nazhG
@@ -26,6 +25,7 @@ contract Claim is ERC20 {
     function getReward(address account_) public view returns(uint256 reward) {
 
         uint256 report_ = ERC20TransferTier(tierAddress).report(account_);
+        if(getTier(account_) == 0) { return 0; }
 
         uint256 userJoinBlockNumber = uint256(uint32(uint256(report_ >> ((getTier(account_)-1)*32))));
 
