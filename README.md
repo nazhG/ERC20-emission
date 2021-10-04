@@ -13,6 +13,28 @@ Prestige Tiers
  - 	GOLD = 2.5 USDC
  - 	PLATINUM = 5 USDC
 
+## TODO
+
+✅ still have a hardhat console dep in the contract
+✅ MIT or CAL license?
+✅ if reward per block is the same per tier for every claim, it is wasteful on gas to be recalculating it every time, set the rewards for each tier in an immutable during contract construction
+- comments need a lot more work
+- i think we want an IClaim and a general duration claim
+✅ why would a claim contract have a getTier public function? tierAddress should be explicitly declared as public, and should be the authority on reports
+- run solhint over everything using the same settings as rain protocol
+✅ Terra Virtua not Terra Virtual
+- sentences start with capital and end with full stop
+- other claim contracts allow delegated claims, it seems to me that with a linear emissions schedule this would be fine to add here
+? if we only calculate a single emissions value from the join date for a particular tier then this effectively deletes someones claim when they _increase_ their tier
+✅ you can use tierBlock to get the block for a given tier, rather than manually bit shifting
+✅ can we adopt the pattern that variables outside storage have _ suffix? e.g. diffBlocksSinceInvest_
+- can we run slither over the whole thing?
+- can we have the reward calculation expressed as a pure function in terms of a tier report and a last claim block?
+✅ can we use safe math?
+✅ can we just calculate the multiplier as uint256 multiplier = (2 * 18).min(diffBlocks.mul(multiplierPerBlock)) without the if block?
+✅ can we use the same version of solidity as rain protocol?
+✅ should be emitting event when claiming, see TierByConstructionClaim for an example
+
 ## Running tests ⚙️
 
 _In order to test using a mainnet fork you must set:_

@@ -1,62 +1,52 @@
-import { writable } from 'svelte/store';
-import { readable } from 'svelte/store';
+import { writable } from "svelte/store";
 
-const
-Prestige    = {
-    tier    : readable([
-        {
-            tier_name: 'Bronze',
-            join_cost: 500000, 
-            tier_num: 0, 
-        },
-        {
-            tier_name: 'Silver',
-            join_cost: 1000000, 
-            tier_num: 1, 
-        },
-        {
-            tier_name: 'Gold',
-            join_cost: 2500000, 
-            tier_num: 2, 
-        },
-        {
-            tier_name: 'Platinum',
-            join_cost: 5000000, 
-            tier_num: 3, 
-        },
-    ]),
-    address : readable('0xE408478799d71E4E5b17D41C973A4f05354fE5DF'),
-    contract: writable(null),
-},
-PaymentToken= {
-    simbol  : readable('USDC'),
-    address : readable('0x2058a9d7613eee744279e3856ef0eada5fcbaa7e'),
-    contract: writable(null),
-},
-Reward      = {
-    simbol  : readable('TVP'),
-    address : readable('0x2399B1e496adBAF056aC087a68Ff3056d14d4C4B'),
-    contract: writable(null),
-},
-Connection  = {
-    web3        : writable(null),
-    logged      : writable(false),
-    account     : writable(null),
-    chainId     : writable(null), 
-    tx_OnGoing  : writable(false),
-    tx_Message  : writable(''),
-},
-User        = {
-    affiliation_date : writable(0),
-    funds  : writable(0),
-    tuer   : writable(-1),
-    reward : writable(0),
-};
+const Claimer = writable({
+    tier: [
+      {
+        tier_name: "Bronze",
+        join_cost: .5 * 10e6,
+        tier_num: 1,
+      },
+      {
+        tier_name: "Silver",
+        join_cost: 1 * 10e6,
+        tier_num: 2,
+      },
+      {
+        tier_name: "Gold",
+        join_cost: 2.5 * 10e6,
+        tier_num: 3,
+      },
+      {
+        tier_name: "Platinum",
+        join_cost: 5 * 10e6,
+        tier_num: 4,
+      },
+    ],
+    simbol: "TVP",
+    address: "0x0CA7Ec7b831305DCA0bfCF8E62f959A50c4121A6",
+    contract: null,
+  }),
+  Tiers = writable({
+    address: "0xAeeF3dE727E4a4ecAa7b7Ff648c7167C5329ec4B",
+    payment: "0x2058A9D7613eEE744279e3856Ef0eAda5FCbaA7e",
+    simbol: "USDC",
+    contract: null,
+  }),
+  Connection = writable({
+    web3: null,
+    logged: false,
+    account: null,
+    chainId: null,
+    tx_OnGoing: false,
+    tx_Message: "",
+  }),
+  User = writable({
+    balance: 0,
+    affiliation_date: 0,
+    funds: 0,
+    tier: -1,
+    reward: 0,
+  });
 
-export { 
-    Prestige,
-    PaymentToken,
-    Reward,
-    Connection,
-    User,
-};
+export { Claimer, Tiers, Connection, User };

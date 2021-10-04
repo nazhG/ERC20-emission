@@ -1,7 +1,7 @@
 const Tier = artifacts.require("ERC20TransferTier")
 const Claim = artifacts.require("Claim")
 const IERC20 = artifacts.require("IERC20")
-const { time } = require("@openzeppelin/test-helpers")
+const { time, expectEvent } = require("@openzeppelin/test-helpers")
 const { assert } = require("hardhat");
 
 const { USDC_ADDRESS, TIERS } = require("./token_address")
@@ -9,6 +9,7 @@ const { USDC_ADDRESS, TIERS } = require("./token_address")
 function calculateReward(_tierValue, _time) {
 	const rewardPerBlock = _tierValue / 15552000,
 	multiplier = (_time / 46656000) + 1; // final multiplier
+	
 	return Math.floor(rewardPerBlock * _time * multiplier)
 }
 
@@ -36,6 +37,7 @@ contract("Mint and Reward Token", ([silverUser, goldUser, bronzeUser]) => {
 		// Deployed contracts
 		tier = await Tier.new(USDC_ADDRESS, TIERS, { from: manager })
 		claimer = await Claim.new(tier.address, { from: manager })
+		
 	});
 
 	it("Joining tier", async function () {
@@ -56,16 +58,20 @@ contract("Mint and Reward Token", ([silverUser, goldUser, bronzeUser]) => {
 	});
 		
 	it("Claiming reward", async function () {
-		await claimer.claim({from: silverUser})
+		const expectReward = Number(await claimer.getReward(silverUser)) + 1;
+		const tx = await claimer.claim({from: silverUser})
+		
+		await expectEvent.inTransaction(tx.tx, claimer, '_claim', { account: silverUser, data_: expectReward.toString() });
 
 		assert.equal(Number(await claimer.getReward(silverUser)), 0, 'Reward no discount')
-		assert.closeTo(Number(await claimer.balanceOf(silverUser)), reward, 3, 'Points claimed')
+		assert.closeTo(Number(await claimer.balanceOf(silverUser)), expectReward, 3, 'Points claimed')
 	});		
 
 	it("When tier up", async function () {
 		await usdc.approve(tier.address, Number((await tier.tierValues())[2]), {from: goldUser})
 		await tier.setTier(goldUser, 2, [], {from: goldUser})
-		const blocksToAdvance = 1000;
+		
+		let blocksToAdvance = 1000;
 		await time.advanceBlockTo(Number(await time.latestBlock()) + blocksToAdvance)
 		
 		await usdc.approve(tier.address, Number((await tier.tierValues())[3]), {from: goldUser})
@@ -73,9 +79,14 @@ contract("Mint and Reward Token", ([silverUser, goldUser, bronzeUser]) => {
 		await time.advanceBlockTo(Number(await time.latestBlock()) + blocksToAdvance)
 
 		const  tierValue = Number((await tier.tierValues())[3]);
-		reward = calculateReward(tierValue, blocksToAdvance);
+		reward = calculateReward(tierValue, ++blocksToAdvance);
+		
+		assert.closeTo(Number(await claimer.getReward(goldUser)), reward, 3, 'the reward is not what was expected')
+		
+		const tx = await claimer.claim({from: goldUser})
+		
+		assert.equal(Number(await claimer.getReward(goldUser)), 0, "reward not burn");		
 
-		assert.closeTo(Number(await claimer.getReward(goldUser)), reward, 3, 'There is not reward')
 	});
 
 	it("When tier down", async function () {
@@ -91,7 +102,7 @@ contract("Mint and Reward Token", ([silverUser, goldUser, bronzeUser]) => {
 		const  tierValue = Number((await tier.tierValues())[1]);
 		reward = calculateReward(tierValue, blocksToAdvance * 2);
 		
-		assert.closeTo(Number(await claimer.getReward(bronzeUser)), reward, 3, 'There is not reward')
+		assert.closeTo(Number(await claimer.getReward(bronzeUser)), reward, 3, 'the reward is not what was expected')
 	});
 
 })

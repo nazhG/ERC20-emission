@@ -5,14 +5,7 @@
   import { getContext } from 'svelte';
   import { useNavigate, useLocation } from "svelte-navigator";
   import Modal from './Modal.svelte';
-	import { 
-    Prestige,
-    PaymentToken,
-    Reward,
-    Connection,
-    User,
-} from './stores.js';
-import abi_minter from './abi/prestige';
+	import { Connection, User } from './stores.js';
 
 const { open } = getContext('simple-modal');
 const { addNotification } = getNotificationsContext();
@@ -20,12 +13,13 @@ const { addNotification } = getNotificationsContext();
 const navigate = useNavigate();
 const location = useLocation();
 
-let provider;
+let provider, connection = $Connection;
 
 onMount(async () => {
   provider = await detectEthereumProvider();
   if (provider) {
-    Connection.web3.set(new Web3(provider));
+    connection.web3 = new Web3(provider);
+		Connection.set(connection); 
   } else {
     open(Modal, { message: 'To connect you will need MetaMask. 🦊',
     linkRef: 'https://metamask.io/download',
@@ -47,9 +41,9 @@ onMount(async () => {
   ethereum.on('accountsChanged', handleAccountsChanged);
 });
 
-
 const handleChainChanged = (_chainId) => {
-  Connection.chainId.set(parseInt(_chainId)); // hex to dec
+  connection.chainId = parseInt(_chainId); // hex to dec
+	Connection.set(connection); 
   console.log('chain Id: ', parseInt(_chainId));
   if ($Connection.chainId && $Connection.chainId != 80001) {
     open(Modal, { message: 'Please, change the chain to mumbai',
@@ -58,7 +52,7 @@ const handleChainChanged = (_chainId) => {
     });
   }
   // window.location.reload();
-}
+};
 
 const handleAccountsChanged = async (_accounts) => {
   if (_accounts.length === 0) {
@@ -68,17 +62,22 @@ const handleAccountsChanged = async (_accounts) => {
       type: "danger",
       removeAfter: 5000,
     });
-    Connection.logged.set(false);
-    Connection.lccount.set(null);
-    Connection.web3.set(null);
-    User.funds.set(0);
-    User.tier.set(-1);
-    User.affiliation_date.set(0);
-    User.reward.set(0);
+    connection.logged = false;
+    connection.account = null;
+    connection.web3 = null;
+		Connection.set(connection); 
+
+    let user = $User;
+    user.funds = 0;
+    user.tier = -1;
+    user.affiliation_date = 0;
+    user.reward = 0;
+    User.set(user);
   } else if (_accounts[0] !== $Connection.account) {
-    Connection.logged.set(true);
-    Connection.account.set(_accounts[0]);
-    Connection.web3.set(new Web3(provider));
+    connection.logged = true;
+    connection.account = _accounts[0];
+    connection.web3 = new Web3(provider);
+		Connection.set(connection); 
 
 		window.refreshUserInfo();
     
@@ -97,7 +96,7 @@ const handleAccountsChanged = async (_accounts) => {
 
     handleChainChanged(await ethereum.request({ method: 'eth_chainId' }));
   }
-}
+};
 
 const handleConnect = () => {
   ethereum
@@ -111,12 +110,12 @@ const handleConnect = () => {
         removeAfter: 5000,
       });
     });
-}
+};
 
 const accountFilter = (_account) => {
   let ac = String(_account);
   return `${ac.substr(0, 6)}...${ac.substr(ac.length - 4, 4)}`;
-}
+};
 
 </script>
 
