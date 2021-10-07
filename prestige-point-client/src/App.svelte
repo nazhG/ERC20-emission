@@ -5,68 +5,64 @@
 	import Tier from './Tier.svelte';
   	import { Router, Route, Link } from "svelte-navigator";
 	import Modal from 'svelte-simple-modal';
-	import { 
-		TIERS, 
-		TOKEN_SIMBOL, 
-		REWARD_SIMBOL, 
-		web3, 
-		Account, 
-		Minter_Address, 
-		tx_OnGoing, 
-		tx_Message, 
-		User_funds, 
-		User_time, 
-		User_tier,
-		User_reward, 
-	} from './stores.js';
-	import abi_minter from './abi/minter';
+	import { Claimer, Tiers, Connection, User } from './stores.js';
+	import abi_claim from './abi/Claim';
+	import abi_tiers from './abi/ERC20TransferTier';
 	
     window.refreshUserInfo = async () => {
-		if(!$web3)
+		if(!$Connection.web3)
 			return console.log('Can\'t refresh');
-		let minter = new $web3.eth.Contract(abi_minter, $Minter_Address);
+
+		let claimer = $Claimer;	
+		claimer.contract = new $Connection.web3.eth.Contract(abi_claim, $Claimer.address);
+		Claimer.set(claimer);
+		let tiers = $Tiers;	
+		tiers.contract = new $Connection.web3.eth.Contract(abi_tiers, $Tiers.address);
+		Tiers.set(tiers);	
+		
+		let connection = $Connection;
+		let user = $User;
         
 		try {
-			tx_OnGoing.set(true);
-			tx_Message.set('Consulting Balance');
-			let user = await minter.methods.investorFunds($Account).call();
+			connection.tx_OnGoing = true;
+			
+			user.affiliation_date = await claimer.contract.methods.getGetJoinBlock($Connection.account).call();
+			console.log('User affiliation_date: ', user.affiliation_date );
+			User.set(user);
+			
+			connection.tx_Message = 'Consulting Tier';
+			Connection.set(connection); 
+			user.tier = await claimer.contract.methods.getTier($Connection.account).call();
+			console.log('User tier: ', user.tier);
+			
+			connection.tx_Message = 'Consulting Tier Balance';
+			Connection.set(connection); 
+			user.funds = (await tiers.contract.methods.tierValues().call())[$User.tier-1]?
+				(await tiers.contract.methods.tierValues().call())[$User.tier-1]:0;
 			console.log('User funds: ', user.funds);
-			User_funds.set(user.funds);
-
-			console.log('User timestart: ', user.timeStart);
-			User_time.set(user.timeStart);
+			User.set(user);
 			
-			tx_Message.set('Consulting Tier');
-			let user_tier = await minter.methods.getUserTier($Account).call();
-			console.log('User tier: ', user_tier);
-			User_tier.set(user_tier);
+			connection.tx_Message = 'Consulting Prestige Balance';
+			Connection.set(connection); 
+			user.balance = Number(await $Claimer.contract.methods.balanceOf($Connection.account).call());
+			console.log('User balance: ', user.balance);
+			User.set(user);
 			
-			tx_Message.set('Consulting Reward');
-			let user_reward = await minter.methods.getCurrentReward($Account).call();
-			console.log('User reward: ', user_reward);
-			User_reward.set(user_reward);
+			connection.tx_Message = 'Consulting Reward';
+			Connection.set(connection); 
+			
+			user.reward = await claimer.contract.methods.getReward($Connection.account).call();
+			console.log('User reward: ', user.reward);
+			User.set(user);
+		} catch (error) {
+			console.log("Can\'t refresh", error);
+			setTimeout(() => window.refreshUserInfo() , 3000);
 		} finally {
-			tx_OnGoing.set(false);
-			tx_Message.set('');
+			connection.tx_OnGoing = false;
+			connection.tx_Message = '';
+			Connection.set(connection); 
 		}
 
-	};
-
-	// window.testing(60 * 60 * 24 * 5) invest 5 days ago
-	// this test is unfreezeable !!! (unless you transfers the USDC to the minter)
-	// window.testing(0,-1) to reset the account funds
-	window.testing = async (_days_ago, _tier) => {
-		if(!$web3)
-			return console.log('Can\'t refresh');
-		let minter = new $web3.eth.Contract(abi_minter, $Minter_Address);
-        
-        tx_OnGoing.set(true);
-        tx_Message.set('Testing Balance');
-        
-		await minter.methods.setFunds($Account, {timeStart: parseInt(Date.now() / 1000) - _days_ago, funds: _tier<0?0:$TIERS[_tier].join_cost}).send({ from:$Account });
-
-        tx_OnGoing.set(false);
-        tx_Message.set('');
 	};
 </script>
 
@@ -94,13 +90,13 @@
 		<Route path="/">
 			<h1>Join tiers to earn <i>Rewards</i>.</h1>
 			<div class="medals-bar">
-				{#each $TIERS as tier}
+				{#each $Claimer.tier as tier}
 					<Tier
 						tier_name = { tier.tier_name }
 						join_cost = { tier.join_cost }
 						tier_num = { tier.tier_num }
-						reward_token_symbol = { $REWARD_SIMBOL } 
-						pay_token_symbol = { $TOKEN_SIMBOL }
+						reward_token_symbol = { $Claimer.simbol } 
+						pay_token_symbol = { $Tiers.simbol }
 						/>
 				{/each}
 			</div>

@@ -4,7 +4,6 @@
 
 require("dotenv").config();
 require("@nomiclabs/hardhat-truffle5");
-require('@openzeppelin/hardhat-upgrades');
 require("hardhat-gas-reporter");
 
 module.exports = {
@@ -33,7 +32,7 @@ module.exports = {
   solidity: {
     compilers: [
       {
-        version: "0.8.4",
+        version: "0.6.12",
         settings: {
           optimizer: {
             enabled: true,

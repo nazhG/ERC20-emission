@@ -1,29 +1,18 @@
 <script>
     export let tier_name, join_cost, tier_num, reward_token_symbol, pay_token_symbol;
   	import { getNotificationsContext } from "svelte-notifications";
-	import abi_minter from './abi/minter';
+	import { Claimer, Tiers, Connection, User } from './stores.js';
 	import IERC20 from './abi/IERC20';
-	import {
-		web3, 
-		Logged, 
-		ChainId, 
-		Account, 
-		User_tier, 
-		User_time, 
-		tx_OnGoing, 
-		User_funds, 
-		tx_Message, 
-		Minter_Address, 
-		Pay_Token_Address, 
-	} from './stores.js';
 
 	const { addNotification } = getNotificationsContext();
 
-	let pay_token, minter;
+	$:tierRelativeCost = join_cost - Number($User.funds); //how much cost change to a tier
 
     async function handleJoin() {
 
-		if (!$Logged) {
+		let connection = $Connection;
+
+		if (!$Connection.logged) {
 			addNotification({
 				text: 'Connect wallet to join',
 				position: "top-right",
@@ -33,31 +22,33 @@
 			// return false;
 		}
 		
-		if($User_funds > 0) {
-			addNotification({
-				text: 'you can only participate in one tier per account',
-				position: "top-right",
-				type: "warning",
-				removeAfter: 8000,
-			});
-			// return false;
-		}
-
-		pay_token = new $web3.eth.Contract(IERC20, $Pay_Token_Address);
-		minter = new $web3.eth.Contract(abi_minter, $Minter_Address);
-		
 		let success = false;
-		tx_OnGoing.set(true);
+		connection.tx_OnGoing = true;
+		Connection.set(connection); 
 
-		const allowance = Number(await pay_token.methods.allowance($Account, $Minter_Address).call());
-		if (allowance >= join_cost) {
+		let pay_token = new $Connection.web3.eth.Contract(IERC20, $Tiers.payment);
+		const allowance = Number(await pay_token.methods.allowance(
+			$Connection.account, 
+			$Tiers.address
+		).call());
+		
+		if (allowance >= tierRelativeCost) {
 			console.log('User already set allowance: ', allowance);
 			success = true
 		} else {
 			/// Set approvals to join in tier
-			success = await pay_token.methods.approve($Minter_Address, join_cost).send({ from: $Account })
-			.once('sent', () => tx_Message.set('waiting for approval'))
-			.once('transactionHash',  (hash) => tx_Message.set('transaction sent'))
+			success = await pay_token.methods.approve(
+				$Tiers.address, 
+				tierRelativeCost
+			).send({ from: $Connection.account })
+			.once('sent', () => {
+				connection.tx_Message = 'waiting for approval';
+				Connection.set(connection); 
+			})
+			.once('transactionHash',  (hash) => {
+				connection.tx_Message = 'transaction sent';
+				Connection.set(connection); 
+			})
 			.on('error', err => 
 				addNotification({
 				text: 'Set USDC Approval error: ' + err.message,
@@ -68,19 +59,27 @@
 			.then(() => true)
 			.catch(() => false)
 			.finally(() => {
-				tx_Message.set('');
-				tx_OnGoing.set(false);
+				connection.tx_Message = '';
+				connection.tx_OnGoing = false;
+				Connection.set(connection); 
 			});
 		}
 
 		if(!success) return;
-		tx_OnGoing.set(true);
+		connection.tx_OnGoing = true;
+		Connection.set(connection); 
 		console.log('Joining to tier');
 		
 		/// Join to tier
-		await minter.methods.freeze($Pay_Token_Address, tier_num).send({ from: $Account })
-		.once('sent', () => tx_Message.set('waiting for approval'))
-		.once('transactionHash',  (hash) => tx_Message.set('transaction sent'))
+		await $Tiers.contract.methods.setTier($Connection.account, tier_num, []).send({ from: $Connection.account })
+		.once('sent', () => {
+				connection.tx_Message = 'waiting for approval';
+				Connection.set(connection); 
+		})
+		.once('transactionHash',  (hash) => {
+				connection.tx_Message = 'transaction sent';
+				Connection.set(connection); 
+		})
 		.on('error', err => 
 			addNotification({
 			text: 'Joining to Tier error: ' + err.message,
@@ -91,8 +90,9 @@
 		.then(() => {})
 		.catch(()=>{}) // this avoid a warning in console
 		.finally(function(receipt){
-			tx_Message.set('');
-			tx_OnGoing.set(false);
+			connection.tx_Message = '';
+			connection.tx_OnGoing = false;
+			Connection.set(connection); 
 		});
 		
 		window.refreshUserInfo();
@@ -106,22 +106,33 @@
         <img src=".\img\{ tier_name + '_tier' }.jpg" alt="{ tier_name }">
         <span></span>
     </div>
-    <button class="btn tooltip" on:click={() => handleJoin()} disabled={tier_name == 'Untier' || $tx_OnGoing || $ChainId != 80001}>
-        { join_cost / 10**6 } { pay_token_symbol } 
-		{#if $tx_OnGoing}
+    <button class="btn tooltip" 
+		on:click={() => handleJoin()} 
+		disabled={
+			tier_name == 'Untier' || 
+			$Connection.tx_OnGoing || 
+			$Connection.chainId != 80001 ||
+			$User.tier == tier_num
+		}>
+		{#if $User.tier == tier_num}
+			Joined
+		{:else}
+        	{ tierRelativeCost / 10**6 } { pay_token_symbol } 
+		{/if}
+		{#if $Connection.tx_OnGoing}
 			<i class="fas fa-spinner fa-pulse"></i>
 		{/if}
 		<span class="tooltiptext">
-			{#if $Logged}
-				{#if $ChainId != 80001 }
-					Worgn Chain, please change it [{ $ChainId }]<br>
-				{:else if $User_tier == tier_num}
+			{#if $Connection.logged}
+				{#if $Connection.chainId != 80001 }
+					Worgn Chain, please change it [{ $Connection.chainId }]<br>
+				{:else if $User.tier == tier_num}
 					You are joined to this tier<br>
 				{/if}
 			{:else}
 				Join tier <i>!!</i><br>
 			{/if}
-			Daily minimum reward { (join_cost / 10**6) * 0.1 } { reward_token_symbol }
+			Daily minimum reward { (join_cost / 10**6) * 0.1 } { reward_token_symbol } + Multiplier !
         </span>
     </button>
 </div>
