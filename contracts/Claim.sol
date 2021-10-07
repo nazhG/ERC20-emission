@@ -7,7 +7,6 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {TierUtil} from "@beehiveinnovation/rain-protocol/contracts/libraries/TierUtil.sol";
 import {ERC20TransferTier} from "@beehiveinnovation/rain-protocol/contracts/tier/ERC20TransferTier.sol";
 import {ITier} from "@beehiveinnovation/rain-protocol/contracts/tier/ITier.sol";
-import "hardhat/console.sol";
 
 /// @title Terra Virtua Rewards Minter
 /// Allows minting a reward based on the time that the user has been in a tier.
