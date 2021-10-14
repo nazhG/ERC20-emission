@@ -7,7 +7,6 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {TierUtil} from "@beehiveinnovation/rain-protocol/contracts/libraries/TierUtil.sol";
 import {ERC20TransferTier} from "@beehiveinnovation/rain-protocol/contracts/tier/ERC20TransferTier.sol";
 import {ITier} from "@beehiveinnovation/rain-protocol/contracts/tier/ITier.sol";
-import "hardhat/console.sol";
 
 /// @title Terra Virtua Rewards Minter
 /// Allows minting a reward based on the time that the user has been in a tier.
@@ -100,9 +99,9 @@ contract Claim is ERC20 {
                     : userJoinBlockNumber
             )
         );
-        
+
         // The multiplier can be up to a maximum of 2X after 3 years of holding,
-        // Otherwise you calculate a fraction of 2 
+        // Otherwise you calculate a fraction of 2
         // div by the number of blocks in 3 years (46656000)
 
         uint256 multiplier_ = Math.min(
@@ -130,5 +129,4 @@ contract Claim is ERC20 {
 
         lastClaim[msg.sender] = block.number;
     }
-
 }

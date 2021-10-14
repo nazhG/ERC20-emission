@@ -21,10 +21,10 @@ Prestige Tiers
 ✅ comments need a lot more work
 ? i think we want an IClaim and a general duration claim
 ✅ why would a claim contract have a getTier public function? tierAddress should be explicitly declared as public, and should be the authority on reports
-- run solhint over everything using the same settings as rain protocol
+✅ run solhint over everything using the same settings as rain protocol
 ✅ Terra Virtua not Terra Virtual
 ✅ sentences start with capital and end with full stop
-? other claim contracts allow delegated claims, it seems to me that with a linear emissions schedule this would be fine to add here
+✅ other claim contracts allow delegated claims, it seems to me that with a linear emissions schedule this would be fine to add here
 ✅ if we only calculate a single emissions value from the join date for a particular tier then this effectively deletes someones claim when they _increase_ their tier
 ✅ you can use tierBlock to get the block for a given tier, rather than manually bit shifting
 ✅ can we adopt the pattern that variables outside storage have _ suffix? e.g. diffBlocksSinceInvest_
