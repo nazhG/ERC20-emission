@@ -7,6 +7,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {TierUtil} from "@beehiveinnovation/rain-protocol/contracts/libraries/TierUtil.sol";
 import {ERC20TransferTier} from "@beehiveinnovation/rain-protocol/contracts/tier/ERC20TransferTier.sol";
 import {ITier} from "@beehiveinnovation/rain-protocol/contracts/tier/ITier.sol";
+import {IClaim} from "./IClaim.sol";
 
 /// @title Terra Virtua Rewards Minter
 /// Allows minting a reward based on the time that the user has been in a tier.
@@ -16,7 +17,7 @@ import {ITier} from "@beehiveinnovation/rain-protocol/contracts/tier/ITier.sol";
 /// a reward will be calculated based on 10% of the value of the tier over a year
 /// also get the maximum bonus, a multiplier by 2 for 3 years of holding
 /// for a maximum return of 20% per annum of the value of the tier
-contract Claim is ERC20 {
+contract Claim is ERC20, IClaim {
     using SafeMath for uint256;
 
     address immutable tierAddress;
@@ -43,6 +44,7 @@ contract Claim is ERC20 {
         public
         ERC20("TVP", "Terra Virtual Prestige")
     {
+        require(tierAddress_ != address(0));
         tierAddress = tierAddress_;
 
         uint256[8] memory tierValues_ = ERC20TransferTier(tierAddress_)
@@ -79,7 +81,7 @@ contract Claim is ERC20 {
 
     /// Calculates the reward based on the user's holding time and tier.
     /// @return reward_ amount of reclaimable tokens.
-    function getReward(address account_) public view returns (uint256 reward_) {
+    function getReward(address account_) public view override returns (uint256 reward_) {
         uint256 report_ = ERC20TransferTier(tierAddress).report(account_);
         ITier.Tier userTier_ = TierUtil.tierAtBlockFromReport(
             report_,
@@ -120,7 +122,7 @@ contract Claim is ERC20 {
     }
 
     /// Mint reward and upgrade the last claim register by the user.
-    function claim() external {
+    function claim() external override {
         require(getReward(msg.sender) > 0, "Claimer: no reward to claim");
         emit Claims(msg.sender, getReward(msg.sender));
 

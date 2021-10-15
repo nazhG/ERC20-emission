@@ -8,7 +8,7 @@ interface IClaim is IERC20 {
     /// Emitted when the reward is transferred to the account.
     /// @param account Where the reward token was transfered.
     /// @param data_ Claimed amount.
-    event _claim(address indexed account, uint256 data_);
+    event Claims(address indexed account, uint256 data_);
 
     /// @dev Calculate the accumulated reward.
     /// @return reward_ amount of reclaimable tokens.
@@ -19,6 +19,6 @@ interface IClaim is IERC20 {
 
     /// @dev Transfer all accrued reward from the `msg.sender`.
     /// Reward is calculated from the last claim made or when the user joined the tier.
-    /// Emits a {_claim} event.
+    /// Emits a { Claims } event.
     function claim() external;
 }
