@@ -8,7 +8,7 @@ const { USDC_ADDRESS, TIERS } = require("./token_address")
 
 function calculateReward(_tierValue, _time) {
 	const rewardPerBlock = _tierValue / 155520000,
-	multiplier = ((_time * 2) / 46656000) + 1; // final multiplier
+	multiplier = ((_time * 2) / 47304000) + 1; // final multiplier
 	
 	return (rewardPerBlock * _time) * multiplier
 }
@@ -57,7 +57,7 @@ contract("Mint and Reward Token", ([manager, silverUser, goldUser, bronzeUser]) 
 		const expectReward = Number(await claimer.getReward(silverUser));
 		const tx = await claimer.claim({from: silverUser})
 		
-		// await expectEvent.inTransaction(tx.tx, claimer, '_claim', { account: silverUser, data_: expectReward.toString() });
+		// await expectEvent.inTransaction(tx.tx, claimer, 'Claims', { account: silverUser, data_: expectReward.toString() });
 
 		assert.equal(Number(await claimer.getReward(silverUser)), 0, 'Reward no discount')
 		assert.closeTo(Number(await claimer.balanceOf(silverUser)), expectReward, 1e12, 'Points claimed')

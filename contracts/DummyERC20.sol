@@ -8,8 +8,8 @@ contract DummyERC20 is ERC20 {
     constructor () ERC20("Spacelens", "SPCL") public {
     }
 
-    function mint(uint256 _amount) external {
-        _mint(msg.sender, _amount);
+    function mint(uint256 amount_) external {
+        _mint(msg.sender, amount_);
     }
 
 

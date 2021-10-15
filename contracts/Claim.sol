@@ -28,14 +28,13 @@ contract Claim is ERC20 {
     uint256 private immutable rewardTierSix;
     uint256 private immutable rewardTierSeven;
     uint256 private immutable rewardTierEight;
-    uint256[8] private tierValues;
 
     /// @dev Store the block number when user claimed.
     mapping(address => uint256) lastClaim;
 
     /// Claims successfully processed for an account.
     /// @param account Where the reward token was transfered.
-    event _claim(address indexed account, uint256 data_);
+    event Claims(address indexed account, uint256 data_);
 
     /// Set the `tierRewardValues` as a reference of the inmutable value.
     /// The reward is 10% of teh tier value along one year.
@@ -56,6 +55,7 @@ contract Claim is ERC20 {
         rewardTierSix = tierValues_[5].div(155520000);
         rewardTierSeven = tierValues_[6].div(155520000);
         rewardTierEight = tierValues_[7].div(155520000);
+
     }
 
     /// Indexed array with the rewards per block of each tier.
@@ -91,7 +91,6 @@ contract Claim is ERC20 {
         // For the calculation of the holding days,
         // We use the number of the block in which the tier was joined
         // Unless you have already made a claim in that same tier.
-
         uint256 diffBlocksSinceInvest_ = (
             block.number.sub(
                 lastClaim[account_] > userJoinBlockNumber
@@ -100,33 +99,34 @@ contract Claim is ERC20 {
             )
         );
 
-        // The multiplier can be up to a maximum of 2X after 3 years of holding,
-        // Otherwise you calculate a fraction of 2
-        // div by the number of blocks in 3 years (46656000)
-
-        uint256 multiplier_ = Math.min(
-            100000000,
-            diffBlocksSinceInvest_.mul(100000000).div(46656000)
+        // The multiplier can be up to a maximum of 2X after 3 years of holding.
+        // Multiplier is always between 2 and 1.x.
+        uint256 multiplier_ = Math.min( 
+            // We add e8 for the use of decimals.
+            2e8,
+            // Here we calculate when less than 3 years have passed.
+            // 47304000 = (365 days * 3) / 2 = number of blocks in three years.
+            // In this case multiplier will be a number [1.00000001, 1.9999999].
+            diffBlocksSinceInvest_.add(47304000).mul(1e8).div(47304000)
         );
-
-        // Block reward multiplied by the number of blocks,
-        // Added to the reward times the multiplier,
-        // The multiplier will always be a number between [0, 1].
 
         reward_ = userTier_ == ITier.Tier.ZERO
             ? 0
+            // reward = tier reward * number of blocks passed * multiplied / e8 (decimals of the multiplier).
             : tierRewardValues()[uint256(userTier_)]
                 .mul(diffBlocksSinceInvest_)
-                .add(reward_.mul(multiplier_).div(100000000));
+                .mul(multiplier_)
+                .div(1e8);
     }
 
     /// Mint reward and upgrade the last claim register by the user.
     function claim() external {
         require(getReward(msg.sender) > 0, "Claimer: no reward to claim");
-        emit _claim(msg.sender, getReward(msg.sender));
+        emit Claims(msg.sender, getReward(msg.sender));
 
         _mint(msg.sender, getReward(msg.sender));
 
+        // Update `lastClaim` so that the next claims will be calculated from this moment.
         lastClaim[msg.sender] = block.number;
     }
 }
