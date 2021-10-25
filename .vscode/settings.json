@@ -1,6 +1,7 @@
 {
     "solidity.compileUsingRemoteVersion": "v0.6.12+commit.27d51765",
-    "solidity.defaultCompiler": "remote",
+    "solidity.defaultCompiler": "localFile",
     "slither.solcPath": "",
-    "slither.hiddenDetectors": []
+    "slither.hiddenDetectors": [],
+    "solidity.compileUsingLocalVersion": "c:\\src\\ERC20-emission\\soljson-v0.6.12+commit.27d51765.js"
 }
