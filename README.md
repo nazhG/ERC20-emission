@@ -13,27 +13,34 @@ Prestige Tiers
  - 	GOLD = 2.5 USDC
  - 	PLATINUM = 5 USDC
 
-## TODO
+## TODO ✅ ❌
+- ✅ put dummy erc20 in a subdir like test/DummyERC20 so it's clear that it is not for production.
+- ✅ comments on dummy erc20.
+- ✅ superfluous extra whitespace in dummy erc20.
+- i'm not seeing hardhat or slither tests in CI.
+- ✅ have client side code in a separate repo so it doesn't confuse/scope creep audits.
+* * [**Client**](https://github.com/nazhG/prestige-point-client) 
+- ✅ use solhint to check that line lengths are 80 chars.
+- ✅ event Claim(address indexed account, bytes data); would match rain claim.
+- ✅ not all @param are documented.
+- ✅ inmutable -> immutable.
+- ✅ user could achieves -> user could achieve.
+- ✅ 155520000 magic number should be a constant with comments.
+- ✅ 100000000 magic number should be a constant with comments.
+- ✅ 46656000 magic number should be a constant with comments.
+- ✅ lastClaim[account_] > userJoinBlockNumber ? lastClaim[account_] : userJoinBlockNumber can be lastClaim[account_].max(userJoinBlockNumber).
+- ✅ if user does not have a tier then don't they have a future block number, which would cause the block.number.sub() to error?.
+* * There is no problem because a report of a user without tier is the maximum int32, this number is used in the calculation of the multiplier but since the reward is 0 for an untier person, the multiplier does not matter.
 
-✅ still have a hardhat console dep in the contract
-✅ MIT or CAL license?
-✅ if reward per block is the same per tier for every claim, it is wasteful on gas to be recalculating it every time, set the rewards for each tier in an immutable during contract construction
-✅ comments need a lot more work
-? i think we want an IClaim and a general duration claim
-✅ why would a claim contract have a getTier public function? tierAddress should be explicitly declared as public, and should be the authority on reports
-- run solhint over everything using the same settings as rain protocol
-✅ Terra Virtua not Terra Virtual
-✅ sentences start with capital and end with full stop
-? other claim contracts allow delegated claims, it seems to me that with a linear emissions schedule this would be fine to add here
-✅ if we only calculate a single emissions value from the join date for a particular tier then this effectively deletes someones claim when they _increase_ their tier
-✅ you can use tierBlock to get the block for a given tier, rather than manually bit shifting
-✅ can we adopt the pattern that variables outside storage have _ suffix? e.g. diffBlocksSinceInvest_
-❌ can we run slither over the whole thing?
-✅ can we have the reward calculation expressed as a pure function in terms of a tier report and a last claim block?
-✅ can we use safe math?
-✅ can we just calculate the multiplier as uint256 multiplier = (2 * 18).min(diffBlocks.mul(multiplierPerBlock)) without the if block?
-✅ can we use the same version of solidity as rain protocol?
-✅ should be emitting event when claiming, see TierByConstructionClaim for an example
+- ✅ uint256[8] private tierValues is storage not immutable and so should not exist.
+- ✅ calculating getReward twice in claim is gas intensive.
+- ✅ emit the claim event after the state changes for consistency with rain.
+- ✅ if (userTier_ > ITier.Tier.Zero) should be a check at the top of getReward to avoid paying gas for calculating a noop.
+- ✅ why are the reward values each tier equal to the tier values on the transfer tier contract?.
+* * The reward is 10% of the land value, it is earned after one year, for that, in the `tierRewardValues` the value divided by the number of blocks in a year and by 10,
+that way, after a year, I reward her (without multiplier),
+is 10% of the value of the tier.
+[**Doc**](https://docs.google.com/presentation/d/1dCxF4ziYG33WjNReNuHzSwFO22F0JMB5YhA_plCDwLs/edit#slide=id.ge3a182e7e0_0_5) 
 
 ## Running tests ⚙️
 
