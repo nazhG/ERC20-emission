@@ -5,14 +5,23 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
-      COINMARKETCAP_API_KEY: ${{ secrets.COINMARKETCAP_API_KEY }}
     steps:
       - uses: actions/checkout@v2
       - name: Use Node.js
         uses: actions/setup-node@v1
         with:
           node-version: '12.x'
-      - run: npm install
-      - run: npm test
+      - name: uno
+        run: echo "Hello $FIRST_NAME $middle_name $Last_Name, today is Monday!"
+        env:
+          FIRST_NAME: Mona
+          middle_name: The
+          Last_Name: ${{ secrets.ALCHEMY_API_KEY }}
+      - name: dos
+        run: |
+            cat << EOF > .env
+            ALCHEMY_API_KEY=${{ secrets.ALCHEMY_API_KEY }}
+            COINMARKETCAP_API_KEY=${{ secrets.COINMARKETCAP_API_KEY }}
+            EOF
+      - name: tres
+        run: cat .env
