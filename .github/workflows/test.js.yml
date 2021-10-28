@@ -11,17 +11,9 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: '12.x'
-      - name: uno
-        run: echo "Hello $FIRST_NAME $middle_name $Last_Name, today is Monday!"
-        env:
-          FIRST_NAME: Mona
-          middle_name: The
-          Last_Name: ${{ secrets.ALCHEMY_API_KEY }}
-      - name: dos
-        run: |
-            cat << EOF > .env
-            ALCHEMY_API_KEY=${{ secrets.ALCHEMY_API_KEY }}
-            COINMARKETCAP_API_KEY=${{ secrets.COINMARKETCAP_API_KEY }}
-            EOF
-      - name: tres
-        run: cat .env
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - run: npm ci
+      - run: npm test
