@@ -11,10 +11,6 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: '12.x'
-      - name: Use Node.js
-        uses: actions/setup-node@v1
-        with:
-          node-version: '12.x'
       - run: npm ci
       - run: npm test
       - uses: actions/setup-python@v2
@@ -22,4 +18,4 @@ jobs:
           python-version: '3.x'
       - run: pip install slither-analyzer
       - run: slither --version
-      - run: slither .
+      - run: slither . --filter-paths="node_modules/@openzeppelin"  --exclude-dependencies
