@@ -49,19 +49,20 @@ contract Claim is ERC20, IClaim {
     /// @dev Number of blocks needed to reach the maximum reward multiplier.
     /// Seconds in 3 years divided by 2 (network difficulty).
     /// (365 days * 3) / 2 = 47304000 = number of blocks in three years.
-    uint256 private constant blocksToReachMaxMultiplier = (365 days * 3) / 2;
+    //  BLOCKS_TO_REACH_MAX_MULTIPLIER
+    uint256 private constant BLOCKS_TO_REACH_MAX_MULTIPLIER = (365 days * 3)/2;
 
     /// @dev Number of blocks needed to get the base reward.
     /// base reward = 10% of the tier value in one year.
     /// Seconds in 1 year divided by 2 (network difficulty) and by 10%.
     /// 365 days / 20 = 1576800 = number of blocks in a year div by 10.
-    uint256 private constant blocksToReachReward = 365 days / 20;
+    uint256 private constant BLOCKS_TO_REACH_REWARD = 365 days / 20;
 
     /// @dev We use 8 decimal places to calculate the multiplier.
-    uint256 private constant multiplierDecimals = 1e8;
+    uint256 private constant MULTIPLIER_DECIMALS = 1e8;
 
     /// @dev Maximum multiplier achievable for the calculation of the reward.
-    uint256 private constant maxMultiplier = 2 * multiplierDecimals;
+    uint256 private constant MAX_MULTIPLIER = 2 * MULTIPLIER_DECIMALS;
 
     /// @dev Store the block number when user claimed.
     mapping(address => uint256) lastClaim;
@@ -87,14 +88,14 @@ contract Claim is ERC20, IClaim {
         ///  by the number of blocks needed to obtain the reward,
         ///  to know how much reward each block that passes gives,
         ///  all blocks of a year are equivalent to 10% of tier value.
-        rewardTierOne = tierValues_[0].div(blocksToReachReward);
-        rewardTierTwo = tierValues_[1].div(blocksToReachReward);
-        rewardTierThree = tierValues_[2].div(blocksToReachReward);
-        rewardTierFour = tierValues_[3].div(blocksToReachReward);
-        rewardTierFive = tierValues_[4].div(blocksToReachReward);
-        rewardTierSix = tierValues_[5].div(blocksToReachReward);
-        rewardTierSeven = tierValues_[6].div(blocksToReachReward);
-        rewardTierEight = tierValues_[7].div(blocksToReachReward);
+        rewardTierOne = tierValues_[0].div(BLOCKS_TO_REACH_REWARD);
+        rewardTierTwo = tierValues_[1].div(BLOCKS_TO_REACH_REWARD);
+        rewardTierThree = tierValues_[2].div(BLOCKS_TO_REACH_REWARD);
+        rewardTierFour = tierValues_[3].div(BLOCKS_TO_REACH_REWARD);
+        rewardTierFive = tierValues_[4].div(BLOCKS_TO_REACH_REWARD);
+        rewardTierSix = tierValues_[5].div(BLOCKS_TO_REACH_REWARD);
+        rewardTierSeven = tierValues_[6].div(BLOCKS_TO_REACH_REWARD);
+        rewardTierEight = tierValues_[7].div(BLOCKS_TO_REACH_REWARD);
     }
 
     /// Indexed array with the rewards per block of each tier.
@@ -130,7 +131,7 @@ contract Claim is ERC20, IClaim {
             block.number
         );
 
-        if (userTier_ == ITier.Tier.ZERO) {
+        if (userTier_ <= ITier.Tier.ZERO) {
             return 0;
         }
 
@@ -152,20 +153,20 @@ contract Claim is ERC20, IClaim {
             // Add and divide the days by the maximum number of blocks
             //  to get number between [1.00000001, 1.99999999].
             // This will be the multiplier if 
-            //  fewer blocks have passed than `blocksToReachMaxMultiplier`.
-            // Otherwise the multiplier will be `maxMultiplier`.
-            maxMultiplier.min(  
+            //  fewer blocks have passed than `BLOCKS_TO_REACH_MAX_MULTIPLIER`.
+            // Otherwise the multiplier will be `MAX_MULTIPLIER`.
+            MAX_MULTIPLIER.min(  
                 diffBlocksSinceInvest_
-                    .add(blocksToReachMaxMultiplier)
-                    .mul(multiplierDecimals)
-                    .div(blocksToReachMaxMultiplier)
+                    .add(BLOCKS_TO_REACH_MAX_MULTIPLIER)
+                    .mul(MULTIPLIER_DECIMALS)
+                    .div(BLOCKS_TO_REACH_MAX_MULTIPLIER)
             );
 
         // reward = tier reward * number of blocks passed * multiplied / e8.
         reward_ = tierRewardValues()[uint256(userTier_)]
             .mul(diffBlocksSinceInvest_)
             .mul(multiplier_)
-            .div(multiplierDecimals);
+            .div(MULTIPLIER_DECIMALS);
     }
 
     /// Mint reward and upgrade the last claim register by the user.

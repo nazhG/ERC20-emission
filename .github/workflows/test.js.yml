@@ -17,3 +17,9 @@ jobs:
           node-version: '12.x'
       - run: npm ci
       - run: npm test
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - run: pip install slither-analyzer
+      - run: slither --version
+      - run: slither .
